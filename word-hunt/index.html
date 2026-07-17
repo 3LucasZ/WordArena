@@ -1,647 +1,950 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Word Hunt</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Word Hunt</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #0d0d28 100%);
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+      :root {
+        --bg-a: #0c0c1d;
+        --bg-b: #1a1a3e;
+        --bg-c: #0d0d28;
+        --text: #fff;
+        --text-dim: rgba(255, 255, 255, 0.5);
+        --text-muted: rgba(255, 255, 255, 0.35);
+        --text-faint: rgba(255, 255, 255, 0.18);
+        --glass-bg: rgba(255, 255, 255, 0.06);
+        --glass-border: rgba(255, 255, 255, 0.06);
+        --board-bg: rgba(255, 255, 255, 0.02);
+        --word-bg: rgba(255, 255, 255, 0.03);
+        --control-bg: rgba(255, 255, 255, 0.1);
+        --scroll: rgba(255, 255, 255, 0.15);
+        --hdr-a: #4a90d9;
+        --hdr-b: #7c5cbf;
+      }
+      body[data-theme="true-dark"] {
+        --bg-a: #0a0a0a;
+        --bg-b: #141414;
+        --bg-c: #0a0a0a;
+      }
+      body[data-theme="deep-slate"] {
+        --bg-a: #0f1117;
+        --bg-b: #1a1d27;
+        --bg-c: #0c0d12;
+      }
+      body[data-theme="midnight"] {
+        --bg-a: #0a0e1a;
+        --bg-b: #111830;
+        --bg-c: #080b14;
+      }
+      body[data-theme="cream"] {
+        --bg-a: #f5f0e8;
+        --bg-b: #ece4d6;
+        --bg-c: #efe6d4;
+        --text: #2c241a;
+        --text-dim: rgba(44, 36, 26, 0.45);
+        --text-muted: rgba(44, 36, 26, 0.3);
+        --text-faint: rgba(44, 36, 26, 0.15);
+        --glass-bg: rgba(0, 0, 0, 0.04);
+        --glass-border: rgba(0, 0, 0, 0.06);
+        --board-bg: rgba(0, 0, 0, 0.02);
+        --word-bg: rgba(0, 0, 0, 0.02);
+        --control-bg: rgba(0, 0, 0, 0.06);
+        --scroll: rgba(0, 0, 0, 0.12);
+      }
+      body[data-theme="sky"] {
+        --bg-a: #e3f0fa;
+        --bg-b: #d0e3f5;
+        --bg-c: #d8eaf7;
+        --text: #1a2a3a;
+        --text-dim: rgba(26, 42, 58, 0.45);
+        --text-muted: rgba(26, 42, 58, 0.3);
+        --text-faint: rgba(26, 42, 58, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.35);
+        --board-bg: rgba(255, 255, 255, 0.15);
+        --word-bg: rgba(255, 255, 255, 0.15);
+        --control-bg: rgba(0, 0, 0, 0.06);
+        --scroll: rgba(0, 0, 0, 0.12);
+      }
+      body[data-theme="mint"] {
+        --bg-a: #e8f4e8;
+        --bg-b: #d4e8d4;
+        --bg-c: #dceee0;
+        --text: #1a2c1a;
+        --text-dim: rgba(26, 44, 26, 0.45);
+        --text-muted: rgba(26, 44, 26, 0.3);
+        --text-faint: rgba(26, 44, 26, 0.15);
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.35);
+        --board-bg: rgba(255, 255, 255, 0.15);
+        --word-bg: rgba(255, 255, 255, 0.15);
+        --control-bg: rgba(0, 0, 0, 0.06);
+        --scroll: rgba(0, 0, 0, 0.12);
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: linear-gradient(
+          135deg,
+          var(--bg-a) 0%,
+          var(--bg-b) 50%,
+          var(--bg-c) 100%
+        );
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        overflow: hidden;
+        user-select: none;
+        -webkit-user-select: none;
+      }
 
-  #game {
-    width: 100%;
-    max-width: 480px;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    height: 100dvh;
-    gap: 0;
-  }
+      #game {
+        width: 100%;
+        max-width: 480px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100dvh;
+        gap: 0;
+      }
 
-  /* ---- LOADING SCREEN ---- */
-  #loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: linear-gradient(135deg, #0c0c1d 0%, #1a1a3e 50%, #0d0d28 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    transition: opacity 0.5s;
-  }
-  #loading-overlay.hidden { opacity: 0; pointer-events: none; }
-  .spinner {
-    width: 48px; height: 48px;
-    border: 4px solid rgba(255,255,255,0.1);
-    border-top-color: #4a90d9;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #loading-overlay p { margin-top: 16px; font-size: 16px; color: rgba(255,255,255,0.6); }
+      /* ---- LOADING SCREEN ---- */
+      #loading-overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--bg-a);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        transition: opacity 0.5s;
+      }
+      #loading-overlay.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .spinner {
+        width: 48px;
+        height: 48px;
+        border: 4px solid var(--glass-border);
+        border-top-color: #4a90d9;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      #loading-overlay p {
+        margin-top: 16px;
+        font-size: 16px;
+        color: var(--text-dim);
+      }
 
-  /* ---- HEADER ---- */
-  header {
-    width: 100%;
-    text-align: center;
-    padding: 8px 0 4px 0;
-    flex-shrink: 0;
-  }
-  header h1 {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, #4a90d9, #7c5cbf);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+      /* ---- HEADER ---- */
+      header {
+        width: 100%;
+        text-align: center;
+        padding: 8px 0 4px 0;
+        flex-shrink: 0;
+      }
+      header h1 {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: 4px;
+        background: linear-gradient(135deg, #4a90d9, #7c5cbf);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
 
-  .stats {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    max-width: 360px;
-    margin: 4px auto 0;
-    padding: 4px 0;
-  }
-  .stat {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: rgba(255,255,255,0.6);
-  }
-  .stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-    min-width: 40px;
-  }
-  /* ---- BOARD ---- */
-  #board-wrapper {
-    position: relative;
-    width: 100%;
-    max-width: 360px;
-    aspect-ratio: 1;
-    flex-shrink: 0;
-    margin: 8px 0;
-    touch-action: none;
-  }
-  #board-lines {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1;
-    border-radius: 16px;
-  }
-  #board {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-    gap: 10px;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 16px;
-    touch-action: none;
-  }
-  .cell {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(28px, 7vw, 44px);
-    font-weight: 700;
-    border-radius: 12px;
-    background: rgba(255,255,255,0.08);
-    transition: background 0.1s, transform 0.1s, box-shadow 0.1s;
-    cursor: pointer;
-    touch-action: none;
-    position: relative;
-    z-index: 2;
-  }
-  .cell.selected {
-    background: linear-gradient(135deg, #4a90d9, #357abd);
-    transform: scale(0.95);
-  }
-  .cell.selected-valid,
-  .cell.selected-valid.first {
-    background: linear-gradient(135deg, #34c759, #28a745);
-    transform: scale(0.95);
-  }
-  .cell.selected-dup,
-  .cell.selected-dup.first {
-    background: linear-gradient(135deg, #ff9500, #cc7a00);
-    transform: scale(0.95);
-  }
-  .cell.first {
-    background: linear-gradient(135deg, #4a90d9, #3a7bd5);
-    box-shadow: 0 0 16px rgba(74,144,217,0.4);
-  }
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 360px;
+        margin: 4px auto 0;
+        padding: 4px 0;
+      }
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-dim);
+      }
+      .stat-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text);
+        min-width: 40px;
+      }
+      /* ---- BOARD ---- */
+      #board-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 360px;
+        aspect-ratio: 1;
+        flex-shrink: 0;
+        margin: 8px 0;
+        touch-action: none;
+      }
+      #board-lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        border-radius: 16px;
+      }
+      #board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 10px;
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        background: var(--board-bg);
+        border-radius: 16px;
+        touch-action: none;
+      }
+      .cell {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(28px, 7vw, 44px);
+        font-weight: 700;
+        border-radius: 12px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid var(--glass-border);
+        transition:
+          background 0.15s,
+          transform 0.1s,
+          border-color 0.15s,
+          box-shadow 0.15s;
+        cursor: pointer;
+        touch-action: none;
+        position: relative;
+        z-index: 2;
+      }
+      .cell.selected {
+        background: rgba(74, 144, 217, 0.15);
+        border-color: rgba(74, 144, 217, 0.25);
+        box-shadow: 0 0 12px rgba(74, 144, 217, 0.08);
+        transform: scale(0.95);
+      }
+      .cell.selected-valid,
+      .cell.selected-valid.first {
+        background: rgba(52, 199, 89, 0.15);
+        border-color: rgba(52, 199, 89, 0.25);
+        box-shadow: 0 0 14px rgba(52, 199, 89, 0.15);
+        transform: scale(0.95);
+      }
+      .cell.selected-dup,
+      .cell.selected-dup.first {
+        background: rgba(255, 149, 0, 0.12);
+        border-color: rgba(255, 149, 0, 0.22);
+        box-shadow: 0 0 10px rgba(255, 149, 0, 0.08);
+        transform: scale(0.95);
+      }
+      .cell.first {
+        background: rgba(74, 144, 217, 0.2);
+        border-color: rgba(74, 144, 217, 0.35);
+        box-shadow: 0 0 18px rgba(74, 144, 217, 0.15);
+        transform: scale(0.95);
+      }
 
-  /* ---- CURRENT WORD ---- */
-  #current-word-area {
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 100%;
-    max-width: 360px;
-  }
-  #current-word {
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.9);
-    transition: color 0.15s;
-  }
-  #current-word.hint { font-size: 16px; color: rgba(255,255,255,0.4); letter-spacing: normal; font-weight: 400; }
+      /* ---- CURRENT WORD ---- */
+      #current-word-area {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 100%;
+        max-width: 360px;
+      }
+      #current-word {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        color: var(--text);
+        transition: color 0.15s;
+      }
+      #current-word.hint {
+        font-size: 16px;
+        color: var(--text-muted);
+        letter-spacing: normal;
+        font-weight: 400;
+      }
 
+      /* ---- SCORE POPUP ---- */
+      #score-popup {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        font-size: 28px;
+        font-weight: 800;
+        color: #34c759;
+        pointer-events: none;
+        z-index: 10;
+        text-shadow: 0 2px 12px rgba(52, 199, 89, 0.4);
+        opacity: 0;
+        transition: none;
+      }
+      #score-popup.show {
+        animation: scorePopup 0.8s ease-out forwards;
+      }
+      @keyframes scorePopup {
+        0% {
+          transform: translate(-50%, -50%) scale(0.5);
+          opacity: 0;
+        }
+        30% {
+          transform: translate(-50%, -50%) scale(1.2);
+          opacity: 1;
+        }
+        70% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -60%) scale(1);
+          opacity: 0;
+        }
+      }
 
-  /* ---- SCORE POPUP ---- */
-  #score-popup {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0);
-    font-size: 28px;
-    font-weight: 800;
-    color: #34c759;
-    pointer-events: none;
-    z-index: 10;
-    text-shadow: 0 2px 12px rgba(52,199,89,0.4);
-    opacity: 0;
-    transition: none;
-  }
-  #score-popup.show {
-    animation: scorePopup 0.8s ease-out forwards;
-  }
-  @keyframes scorePopup {
-    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-    30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-    70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    100% { transform: translate(-50%, -60%) scale(1); opacity: 0; }
-  }
+      /* ---- WORD LIST ---- */
+      #word-list {
+        flex: 1;
+        width: 100%;
+        max-width: 360px;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 1;
+      }
+      #word-list-header {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 4px 4px 0;
+        font-size: 13px;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+        flex-shrink: 0;
+      }
+      #words-container {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        padding-right: 4px;
+      }
+      #words-container::-webkit-scrollbar {
+        width: 3px;
+      }
+      #words-container::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #words-container::-webkit-scrollbar-thumb {
+        background: var(--scroll);
+        border-radius: 3px;
+      }
 
-  /* ---- WORD LIST ---- */
-  #word-list {
-    flex: 1;
-    width: 100%;
-    max-width: 360px;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 1;
-  }
-  #word-list-header {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 4px 4px 0;
-    font-size: 13px;
-    color: rgba(255,255,255,0.4);
-    letter-spacing: 1px;
-    flex-shrink: 0;
-  }
-  #words-container {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding-right: 4px;
-  }
-  #words-container::-webkit-scrollbar { width: 3px; }
-  #words-container::-webkit-scrollbar-track { background: transparent; }
-  #words-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+      .word-entry {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 8px;
+        border-radius: 8px;
+        margin-bottom: 2px;
+        animation: slideIn 0.3s ease-out;
+        background: var(--word-bg);
+      }
+      .word-entry:first-child {
+        animation:
+          slideIn 0.3s ease-out,
+          glowNew 0.6s ease-out;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateY(-10px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+      @keyframes glowNew {
+        0% {
+          background: rgba(52, 199, 89, 0.15);
+        }
+        100% {
+          background: var(--word-bg);
+        }
+      }
+      .word-entry .word-text {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .word-entry .word-score {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-dim);
+      }
 
-  .word-entry {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 8px;
-    margin-bottom: 2px;
-    animation: slideIn 0.3s ease-out;
-    background: rgba(255,255,255,0.03);
-  }
-  .word-entry:first-child { animation: slideIn 0.3s ease-out, glowNew 0.6s ease-out; }
-  @keyframes slideIn {
-    from { transform: translateY(-10px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-  @keyframes glowNew {
-    0% { background: rgba(52,199,89,0.15); }
-    100% { background: rgba(255,255,255,0.03); }
-  }
-  .word-entry .word-text { font-size: 16px; font-weight: 600; }
-  .word-entry .word-score { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.5); }
+      /* ---- CONTROLS ---- */
+      #controls {
+        width: 100%;
+        max-width: 360px;
+        padding: 8px 0 12px;
+        flex-shrink: 0;
+        display: flex;
+        gap: 8px;
+      }
+      #controls button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          opacity 0.2s;
+        touch-action: manipulation;
+      }
+      #controls button:active {
+        transform: scale(0.96);
+      }
+      #btn-new {
+        background: var(--control-bg);
+        color: var(--text);
+      }
+      #btn-new:hover {
+        background: var(--control-bg);
+        opacity: 0.8;
+      }
 
-  /* ---- CONTROLS ---- */
-  #controls {
-    width: 100%;
-    max-width: 360px;
-    padding: 8px 0 12px;
-    flex-shrink: 0;
-    display: flex;
-    gap: 8px;
-  }
-  #controls button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
-    touch-action: manipulation;
-  }
-  #controls button:active { transform: scale(0.96); }
-  #btn-new {
-    background: rgba(255,255,255,0.1);
-    color: #fff;
-  }
-  #btn-new:hover { background: rgba(255,255,255,0.15); }
+      /* ---- THEME PICKER ---- */
+      #theme-picker {
+        width: 100%;
+        max-width: 360px;
+        flex-shrink: 0;
+        padding: 0 0 8px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      }
+      .theme-swatch {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          border-color 0.2s;
+        touch-action: manipulation;
+        position: relative;
+      }
+      .theme-swatch:active {
+        transform: scale(0.9);
+      }
+      .theme-swatch.active {
+        border-color: var(--text);
+      }
 
-  /* ---- HELPER ---- */
-  .empty-state { text-align: center; color: rgba(255,255,255,0.2); font-size: 14px; padding: 24px 0; }
-</style>
-</head>
-<body>
+      /* ---- HELPER ---- */
+      .empty-state {
+        text-align: center;
+        color: var(--text-faint);
+        font-size: 14px;
+        padding: 24px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game">
+      <header>
+        <!-- <h1>WORD HUNT</h1> -->
+        <div class="stats">
+          <div class="stat">
+            <span>SCORE</span>
+            <span class="stat-value" id="score">0</span>
+          </div>
+        </div>
+      </header>
 
-<div id="game">
-  <header>
-    <h1>WORD HUNT</h1>
-    <div class="stats">
-      <div class="stat">
-        <span>SCORE</span>
-        <span class="stat-value" id="score">0</span>
+      <div id="board-wrapper">
+        <canvas id="board-lines"></canvas>
+        <div id="board"></div>
+        <div id="score-popup"></div>
       </div>
+
+      <div id="current-word-area">
+        <div id="current-word">&nbsp;</div>
+      </div>
+
+      <div id="word-list">
+        <div id="word-list-header">
+          <span>FOUND WORDS</span>
+          <span id="words-count">0</span>
+        </div>
+        <div id="words-container">
+          <div class="empty-state">
+            Drag across adjacent letters to find words
+          </div>
+        </div>
+      </div>
+
+      <div id="controls">
+        <button id="btn-new">New Game</button>
+      </div>
+
+      <div id="theme-picker"></div>
     </div>
-  </header>
 
-  <div id="board-wrapper">
-    <canvas id="board-lines"></canvas>
-    <div id="board"></div>
-    <div id="score-popup"></div>
-  </div>
-
-  <div id="current-word-area">
-    <div id="current-word">&nbsp;</div>
-  </div>
-
-  <div id="word-list">
-    <div id="word-list-header">
-      <span>FOUND WORDS</span>
-      <span id="words-count">0</span>
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading words...</p>
     </div>
-    <div id="words-container">
-      <div class="empty-state">Drag across adjacent letters to find words</div>
-    </div>
-  </div>
 
-  <div id="controls">
-    <button id="btn-new">New Game</button>
-  </div>
-</div>
+    <script>
+      // ============================================================
+      // WORD LIST
+      // ============================================================
+      let wordSet = null;
 
-<div id="loading-overlay">
-  <div class="spinner"></div>
-  <p>Loading words...</p>
-</div>
+      async function loadWords() {
+        try {
+          const resp = await fetch("words_raw.txt");
+          if (!resp.ok) throw new Error("HTTP " + resp.status);
+          const text = await resp.text();
+          wordSet = new Set(text.trim().split("\n"));
+          return true;
+        } catch (e) {
+          const p = document.querySelector("#loading-overlay p");
+          p.textContent =
+            "Could not load word list. Make sure you are serving via HTTP.";
+          console.error("Failed to load words:", e);
+          return false;
+        }
+      }
 
-<script>
-// ============================================================
-// WORD LIST
-// ============================================================
-let wordSet = null;
+      async function init() {
+        const ok = await loadWords();
+        loadingOverlay.classList.add("hidden");
+        if (ok) newGame();
+      }
 
-async function loadWords() {
-  try {
-    const resp = await fetch('words_raw.txt');
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const text = await resp.text();
-    wordSet = new Set(text.trim().split('\n'));
-    return true;
-  } catch (e) {
-    const p = document.querySelector('#loading-overlay p');
-    p.textContent = 'Could not load word list. Make sure you are serving via HTTP.';
-    console.error('Failed to load words:', e);
-    return false;
-  }
-}
+      // ============================================================
+      // LETTER DISTRIBUTION
+      // ============================================================
+      const WEIGHTS = {
+        A: 8,
+        B: 2,
+        C: 3,
+        D: 4,
+        E: 12,
+        F: 2,
+        G: 3,
+        H: 2,
+        I: 8,
+        J: 1,
+        K: 1,
+        L: 4,
+        M: 2,
+        N: 6,
+        O: 8,
+        P: 2,
+        Q: 1,
+        R: 6,
+        S: 4,
+        T: 6,
+        U: 4,
+        V: 1,
+        W: 2,
+        X: 1,
+        Y: 2,
+        Z: 1,
+      };
+      const LETTERS = Object.keys(WEIGHTS);
+      const VOWELS = ["A", "E", "I", "O", "U"];
 
-async function init() {
-  const ok = await loadWords();
-  loadingOverlay.classList.add('hidden');
-  if (ok) newGame();
-}
+      function weightedPick() {
+        let total = 0;
+        for (const l of LETTERS) total += WEIGHTS[l];
+        let r = Math.random() * total;
+        for (const l of LETTERS) {
+          r -= WEIGHTS[l];
+          if (r <= 0) return l;
+        }
+        return "E";
+      }
 
-// ============================================================
-// LETTER DISTRIBUTION
-// ============================================================
-const WEIGHTS = {
-  A:8, B:2, C:3, D:4, E:12, F:2, G:3, H:2, I:8, J:1, K:1, L:4,
-  M:2, N:6, O:8, P:2, Q:1, R:6, S:4, T:6, U:4, V:1, W:2, X:1, Y:2, Z:1
-};
-const LETTERS = Object.keys(WEIGHTS);
-const VOWELS = ['A','E','I','O','U'];
+      function generateBoard() {
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const cells = Array.from({ length: 16 }, () => weightedPick());
+          const vc = cells.filter((c) => VOWELS.includes(c)).length;
+          if (vc >= 3) return cells;
+        }
+        // Fallback: force vowels
+        const cells = Array.from({ length: 16 }, () => weightedPick());
+        cells[0] = "A";
+        cells[3] = "E";
+        cells[7] = "I";
+        cells[12] = "O";
+        return cells;
+      }
 
-function weightedPick() {
-  let total = 0;
-  for (const l of LETTERS) total += WEIGHTS[l];
-  let r = Math.random() * total;
-  for (const l of LETTERS) { r -= WEIGHTS[l]; if (r <= 0) return l; }
-  return 'E';
-}
+      // ============================================================
+      // SCORING
+      // ============================================================
+      function wordScore(word) {
+        const len = word.length;
+        if (len < 3) return 0;
+        const map = {
+          3: 100,
+          4: 200,
+          5: 500,
+          6: 800,
+          7: 1100,
+          8: 1400,
+          9: 1700,
+        };
+        return map[len] || 1700 + (len - 9) * 300;
+      }
 
-function generateBoard() {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    const cells = Array.from({length: 16}, () => weightedPick());
-    const vc = cells.filter(c => VOWELS.includes(c)).length;
-    if (vc >= 3) return cells;
-  }
-  // Fallback: force vowels
-  const cells = Array.from({length: 16}, () => weightedPick());
-  cells[0] = 'A'; cells[3] = 'E'; cells[7] = 'I'; cells[12] = 'O';
-  return cells;
-}
+      // ============================================================
+      // GAME STATE
+      // ============================================================
+      const S = {
+        board: [],
+        selection: [],
+        foundWords: new Set(),
+        foundList: [],
+        score: 0,
+      };
 
-// ============================================================
-// SCORING
-// ============================================================
-function wordScore(word) {
-  const len = word.length;
-  if (len < 3) return 0;
-  const map = {3:100, 4:200, 5:500, 6:800, 7:1100, 8:1400, 9:1700};
-  return map[len] || 1700 + (len - 9) * 300;
-}
+      // ============================================================
+      // DOM REFS
+      // ============================================================
+      const boardEl = document.getElementById("board");
+      const boardWrapper = document.getElementById("board-wrapper");
+      const canvas = document.getElementById("board-lines");
+      const ctx = canvas.getContext("2d");
+      const currentWordEl = document.getElementById("current-word");
+      const scoreEl = document.getElementById("score");
+      const wordsContainer = document.getElementById("words-container");
+      const wordsCountEl = document.getElementById("words-count");
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const scorePopupEl = document.getElementById("score-popup");
 
-// ============================================================
-// GAME STATE
-// ============================================================
-const S = {
-  board: [],
-  selection: [],
-  foundWords: new Set(),
-  foundList: [],
-  score: 0,
-};
+      // ============================================================
+      // BOARD RENDER
+      // ============================================================
+      function renderBoard() {
+        const cells = boardEl.children;
 
-// ============================================================
-// DOM REFS
-// ============================================================
-const boardEl = document.getElementById('board');
-const boardWrapper = document.getElementById('board-wrapper');
-const canvas = document.getElementById('board-lines');
-const ctx = canvas.getContext('2d');
-const currentWordEl = document.getElementById('current-word');
-const scoreEl = document.getElementById('score');
-const wordsContainer = document.getElementById('words-container');
-const wordsCountEl = document.getElementById('words-count');
-const loadingOverlay = document.getElementById('loading-overlay');
-const scorePopupEl = document.getElementById('score-popup');
+        // Determine live path status
+        let pathStatus = "";
+        if (S.selection.length >= 3) {
+          const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+          const lower = word.toLowerCase();
+          if (wordSet && wordSet.has(lower)) {
+            pathStatus = S.foundWords.has(word) ? "dup" : "valid";
+          }
+        }
 
-// ============================================================
-// BOARD RENDER
-// ============================================================
-function renderBoard() {
-  const cells = boardEl.children;
+        for (let i = 0; i < 16; i++) {
+          const cell = cells[i];
+          cell.textContent = S.board[i];
+          const row = Math.floor(i / 4);
+          const col = i % 4;
+          const si = S.selection.findIndex((t) => t.r === row && t.c === col);
+          cell.className = "cell";
+          if (si >= 0) {
+            if (pathStatus === "valid") cell.classList.add("selected-valid");
+            else if (pathStatus === "dup") cell.classList.add("selected-dup");
+            else cell.classList.add("selected");
+            if (si === 0) cell.classList.add("first");
+          }
+        }
+        // Current word display
+        currentWordEl.className = "";
+        const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+        currentWordEl.textContent = word || " ";
+        drawLines(pathStatus);
+      }
 
-  // Determine live path status
-  let pathStatus = '';
-  if (S.selection.length >= 3) {
-    const word = S.selection.map(t => S.board[t.r * 4 + t.c]).join('');
-    const lower = word.toLowerCase();
-    if (wordSet && wordSet.has(lower)) {
-      pathStatus = S.foundWords.has(word) ? 'dup' : 'valid';
-    }
-  }
+      function drawLines(status) {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = boardWrapper.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        canvas.style.width = rect.width + "px";
+        canvas.style.height = rect.height + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  for (let i = 0; i < 16; i++) {
-    const cell = cells[i];
-    cell.textContent = S.board[i];
-    const row = Math.floor(i / 4);
-    const col = i % 4;
-    const si = S.selection.findIndex(t => t.r === row && t.c === col);
-    cell.className = 'cell';
-    if (si >= 0) {
-      if (pathStatus === 'valid') cell.classList.add('selected-valid');
-      else if (pathStatus === 'dup') cell.classList.add('selected-dup');
-      else cell.classList.add('selected');
-      if (si === 0) cell.classList.add('first');
-    }
-  }
-  // Current word display
-  currentWordEl.className = '';
-  const word = S.selection.map(t => S.board[t.r * 4 + t.c]).join('');
-  currentWordEl.textContent = word || ' ';
-  drawLines(pathStatus);
-}
+        ctx.clearRect(0, 0, rect.width, rect.height);
 
-function drawLines(status) {
-  const dpr = window.devicePixelRatio || 1;
-  const rect = boardWrapper.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = rect.height + 'px';
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        if (S.selection.length < 2) return;
 
-  ctx.clearRect(0, 0, rect.width, rect.height);
+        // Line color
+        let color = "rgba(74,144,217,0.5)";
+        if (status === "valid") color = "rgba(52,199,89,0.6)";
+        else if (status === "dup") color = "rgba(255,149,0,0.6)";
 
-  if (S.selection.length < 2) return;
+        // Get cell centers relative to canvas
+        const cells = boardEl.children;
+        const points = S.selection.map((t) => {
+          const el = cells[t.r * 4 + t.c];
+          const cr = el.getBoundingClientRect();
+          return {
+            x: cr.left - rect.left + cr.width / 2,
+            y: cr.top - rect.top + cr.height / 2,
+          };
+        });
 
-  // Line color
-  let color = 'rgba(74,144,217,0.5)';
-  if (status === 'valid') color = 'rgba(52,199,89,0.6)';
-  else if (status === 'dup') color = 'rgba(255,149,0,0.6)';
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
 
-  // Get cell centers relative to canvas
-  const cells = boardEl.children;
-  const points = S.selection.map(t => {
-    const el = cells[t.r * 4 + t.c];
-    const cr = el.getBoundingClientRect();
-    return {
-      x: cr.left - rect.left + cr.width / 2,
-      y: cr.top - rect.top + cr.height / 2,
-    };
-  });
+      // ============================================================
+      // POINTER / TOUCH HANDLING
+      // ============================================================
+      let dragging = false;
 
-  ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.stroke();
-}
+      function tileAtPoint(x, y) {
+        const rect = boardEl.getBoundingClientRect();
+        const w = rect.width / 4;
+        const h = rect.height / 4;
+        // Compute raw cell position
+        const col = Math.floor((x - rect.left) / w);
+        const row = Math.floor((y - rect.top) / h);
+        if (row < 0 || row > 3 || col < 0 || col > 3) return null;
+        // Shrink hitbox: only count if finger is well inside the cell
+        const cx = rect.left + (col + 0.5) * w;
+        const cy = rect.top + (row + 0.5) * h;
+        const hw = w * 0.35; // 35% of cell width = 70% of total width
+        const hh = h * 0.35;
+        if (Math.abs(x - cx) > hw || Math.abs(y - cy) > hh) return null;
+        return { r: row, c: col };
+      }
 
-// ============================================================
-// POINTER / TOUCH HANDLING
-// ============================================================
-let dragging = false;
+      function isAdj(a, b) {
+        return (
+          Math.abs(a.r - b.r) <= 1 &&
+          Math.abs(a.c - b.c) <= 1 &&
+          !(a.r === b.r && a.c === b.c)
+        );
+      }
 
-function tileAtPoint(x, y) {
-  const rect = boardEl.getBoundingClientRect();
-  const w = rect.width / 4;
-  const h = rect.height / 4;
-  // Compute raw cell position
-  const col = Math.floor((x - rect.left) / w);
-  const row = Math.floor((y - rect.top) / h);
-  if (row < 0 || row > 3 || col < 0 || col > 3) return null;
-  // Shrink hitbox: only count if finger is well inside the cell
-  const cx = rect.left + (col + 0.5) * w;
-  const cy = rect.top + (row + 0.5) * h;
-  const hw = w * 0.35; // 35% of cell width = 70% of total width
-  const hh = h * 0.35;
-  if (Math.abs(x - cx) > hw || Math.abs(y - cy) > hh) return null;
-  return {r: row, c: col};
-}
+      function onPointerDown(e) {
+        const tile = tileAtPoint(e.clientX, e.clientY);
+        if (!tile) return;
+        dragging = true;
+        S.selection = [tile];
+        boardEl.setPointerCapture(e.pointerId);
+        renderBoard();
+      }
 
-function isAdj(a, b) {
-  return Math.abs(a.r - b.r) <= 1 && Math.abs(a.c - b.c) <= 1
-    && !(a.r === b.r && a.c === b.c);
-}
+      function onPointerMove(e) {
+        if (!dragging) return;
 
-function onPointerDown(e) {
-  const tile = tileAtPoint(e.clientX, e.clientY);
-  if (!tile) return;
-  dragging = true;
-  S.selection = [tile];
-  boardEl.setPointerCapture(e.pointerId);
-  renderBoard();
-}
+        const tile = tileAtPoint(e.clientX, e.clientY);
+        if (!tile) return;
 
-function onPointerMove(e) {
-  if (!dragging) return;
+        const last = S.selection[S.selection.length - 1];
+        if (tile.r === last.r && tile.c === last.c) return;
+        if (S.selection.some((t) => t.r === tile.r && t.c === tile.c)) return;
+        if (!isAdj(tile, last)) return;
 
-  const tile = tileAtPoint(e.clientX, e.clientY);
-  if (!tile) return;
+        S.selection.push(tile);
+        renderBoard();
+      }
 
-  const last = S.selection[S.selection.length - 1];
-  if (tile.r === last.r && tile.c === last.c) return;
-  if (S.selection.some(t => t.r === tile.r && t.c === tile.c)) return;
-  if (!isAdj(tile, last)) return;
+      function onPointerUp(e) {
+        if (!dragging) return;
+        dragging = false;
+        if (boardEl.hasPointerCapture(e.pointerId)) {
+          boardEl.releasePointerCapture(e.pointerId);
+        }
+        submitWord();
+      }
 
-  S.selection.push(tile);
-  renderBoard();
-}
+      boardEl.addEventListener("pointerdown", onPointerDown);
+      boardEl.addEventListener("pointermove", onPointerMove);
+      boardEl.addEventListener("pointerup", onPointerUp);
+      boardEl.addEventListener("pointercancel", () => {
+        if (dragging) {
+          dragging = false;
+          submitWord();
+        }
+      });
 
-function onPointerUp(e) {
-  if (!dragging) return;
-  dragging = false;
-  if (boardEl.hasPointerCapture(e.pointerId)) {
-    boardEl.releasePointerCapture(e.pointerId);
-  }
-  submitWord();
-}
+      // ============================================================
+      // WORD SUBMISSION
+      // ============================================================
+      function submitWord() {
+        const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+        S.selection = [];
+        renderBoard();
 
-boardEl.addEventListener('pointerdown', onPointerDown);
-boardEl.addEventListener('pointermove', onPointerMove);
-boardEl.addEventListener('pointerup', onPointerUp);
-boardEl.addEventListener('pointercancel', () => {
-  if (dragging) { dragging = false; submitWord(); }
-});
+        if (
+          word.length >= 3 &&
+          wordSet &&
+          wordSet.has(word.toLowerCase()) &&
+          !S.foundWords.has(word)
+        ) {
+          S.foundWords.add(word);
+          S.foundList.unshift({ word, score: wordScore(word) });
+          S.score += wordScore(word);
+          updateScore();
+          renderFoundWords();
+          showScorePopup(wordScore(word));
+        }
+      }
 
-// ============================================================
-// WORD SUBMISSION
-// ============================================================
-function submitWord() {
-  const word = S.selection.map(t => S.board[t.r * 4 + t.c]).join('');
-  S.selection = [];
-  renderBoard();
+      function showScorePopup(pts) {
+        scorePopupEl.textContent = `+${pts}`;
+        scorePopupEl.className = "show";
+        setTimeout(() => {
+          scorePopupEl.className = "";
+        }, 800);
+      }
 
-  if (word.length >= 3 && wordSet && wordSet.has(word.toLowerCase()) && !S.foundWords.has(word)) {
-    S.foundWords.add(word);
-    S.foundList.unshift({word, score: wordScore(word)});
-    S.score += wordScore(word);
-    updateScore();
-    renderFoundWords();
-    showScorePopup(wordScore(word));
-  }
-}
+      // ============================================================
+      // UI UPDATES
+      // ============================================================
+      function updateScore() {
+        scoreEl.textContent = S.score;
+      }
 
-function showScorePopup(pts) {
-  scorePopupEl.textContent = `+${pts}`;
-  scorePopupEl.className = 'show';
-  setTimeout(() => { scorePopupEl.className = ''; }, 800);
-}
+      function renderFoundWords() {
+        wordsContainer.innerHTML = "";
+        if (S.foundList.length === 0) {
+          wordsContainer.innerHTML =
+            '<div class="empty-state">Drag across adjacent letters to find words</div>';
+          wordsCountEl.textContent = "0";
+          return;
+        }
+        wordsCountEl.textContent = S.foundList.length;
+        for (const entry of S.foundList) {
+          const div = document.createElement("div");
+          div.className = "word-entry";
+          div.innerHTML = `<span class="word-text">${entry.word}</span><span class="word-score">${entry.score}</span>`;
+          wordsContainer.appendChild(div);
+        }
+      }
 
-// ============================================================
-// UI UPDATES
-// ============================================================
-function updateScore() {
-  scoreEl.textContent = S.score;
-}
+      // ============================================================
+      // NEW GAME
+      // ============================================================
+      function newGame() {
+        S.board = generateBoard();
+        S.selection = [];
+        S.foundWords = new Set();
+        S.foundList = [];
+        S.score = 0;
 
-function renderFoundWords() {
-  wordsContainer.innerHTML = '';
-  if (S.foundList.length === 0) {
-    wordsContainer.innerHTML = '<div class="empty-state">Drag across adjacent letters to find words</div>';
-    wordsCountEl.textContent = '0';
-    return;
-  }
-  wordsCountEl.textContent = S.foundList.length;
-  for (const entry of S.foundList) {
-    const div = document.createElement('div');
-    div.className = 'word-entry';
-    div.innerHTML = `<span class="word-text">${entry.word}</span><span class="word-score">${entry.score}</span>`;
-    wordsContainer.appendChild(div);
-  }
-}
+        // Build board DOM
+        boardEl.innerHTML = "";
+        for (let i = 0; i < 16; i++) {
+          const div = document.createElement("div");
+          div.className = "cell";
+          boardEl.appendChild(div);
+        }
 
-// ============================================================
-// NEW GAME
-// ============================================================
-function newGame() {
-  S.board = generateBoard();
-  S.selection = [];
-  S.foundWords = new Set();
-  S.foundList = [];
-  S.score = 0;
+        renderBoard();
+        updateScore();
+        renderFoundWords();
+        currentWordEl.textContent = "Drag to play";
+        currentWordEl.className = "hint";
+      }
 
-  // Build board DOM
-  boardEl.innerHTML = '';
-  for (let i = 0; i < 16; i++) {
-    const div = document.createElement('div');
-    div.className = 'cell';
-    boardEl.appendChild(div);
-  }
+      // ============================================================
+      // THEMES
+      // ============================================================
+      const THEMES = [
+        { id: "dark-purple", colors: ["#0c0c1d", "#1a1a3e", "#0d0d28"] },
+        { id: "true-dark", colors: ["#0a0a0a", "#141414", "#0a0a0a"] },
+        { id: "deep-slate", colors: ["#0f1117", "#1a1d27", "#0c0d12"] },
+        { id: "midnight", colors: ["#0a0e1a", "#111830", "#080b14"] },
+        { id: "cream", colors: ["#f5f0e8", "#ece4d6", "#efe6d4"] },
+        { id: "sky", colors: ["#e3f0fa", "#d0e3f5", "#d8eaf7"] },
+        { id: "mint", colors: ["#e8f4e8", "#d4e8d4", "#dceee0"] },
+      ];
 
-  renderBoard();
-  updateScore();
-  renderFoundWords();
-  currentWordEl.textContent = 'Drag to play';
-  currentWordEl.className = 'hint';
-}
+      function setTheme(id) {
+        document.body.setAttribute("data-theme", id);
+        localStorage.setItem("wh-theme", id);
+        document.querySelectorAll(".theme-swatch").forEach((el) => {
+          el.classList.toggle("active", el.dataset.theme === id);
+        });
+        // Re-draw lines since canvas may need re-render
+        if (S.selection.length) drawLines();
+      }
 
-// ============================================================
-// INIT
-// ============================================================
-document.getElementById('btn-new').addEventListener('click', newGame);
+      function buildThemePicker() {
+        const container = document.getElementById("theme-picker");
+        const saved = localStorage.getItem("wh-theme") || "dark-purple";
+        for (const t of THEMES) {
+          const swatch = document.createElement("div");
+          swatch.className = "theme-swatch" + (t.id === saved ? " active" : "");
+          swatch.dataset.theme = t.id;
+          swatch.style.background = `linear-gradient(135deg, ${t.colors[0]}, ${t.colors[2]})`;
+          swatch.addEventListener("click", () => setTheme(t.id));
+          container.appendChild(swatch);
+        }
+      }
 
-init();
-</script>
-</body>
+      // ============================================================
+      // INIT
+      // ============================================================
+      document.getElementById("btn-new").addEventListener("click", newGame);
+
+      // Restore saved theme before anything renders
+      (function restoreTheme() {
+        const saved = localStorage.getItem("wh-theme");
+        if (saved) document.body.setAttribute("data-theme", saved);
+      })();
+
+      buildThemePicker();
+      init();
+    </script>
+  </body>
 </html>

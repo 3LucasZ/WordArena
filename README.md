@@ -13,4 +13,5 @@
   - lines that connect between each sequential letter you pass through
   - should be fast, quick feedback
 - Word dictionary
-  - Still thinking about which list to use...
+  - https://github.com/dwyl/english-words (popular)
+  - filter to 3+ letter lowercase words, no upper bound
