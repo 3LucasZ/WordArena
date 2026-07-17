@@ -6,4 +6,7 @@ const CONFIG = {
   // 0.35 means the hitbox is 70% of the cell's total area (35% margin each side).
   // Increase to make tiles easier to hit (less precise), decrease for tighter control.
   tileHitboxSize: 0.4,
+
+  // Board size options shown in settings (can be overridden via settings UI)
+  boardSizes: [4, 5, 6],
 };

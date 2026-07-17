@@ -18,3 +18,7 @@
 - Settings
   - Modal popup
   - Color / theme picker
+  - Board size
+- Constant config
+  - Point assignment
+  - Tile hitbox

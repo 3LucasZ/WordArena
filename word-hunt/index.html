@@ -232,7 +232,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: clamp(28px, 7vw, 44px);
+        font-size: var(--cell-fs, clamp(28px, 7vw, 44px));
         font-weight: 700;
         border-radius: 12px;
         background: var(--glass-bg);
@@ -530,6 +530,34 @@
       .theme-swatch.active {
         border-color: var(--text);
       }
+      #size-picker {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+      .size-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        background: var(--glass-bg);
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: transform 0.1s, border-color 0.2s, background 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .size-btn:active {
+        transform: scale(0.92);
+      }
+      .size-btn.active {
+        border-color: var(--text);
+        background: rgba(74, 144, 217, 0.2);
+      }
       #btn-close-settings {
         margin-top: 16px;
         padding: 8px 28px;
@@ -600,7 +628,9 @@
 
       <div id="settings-modal">
         <div id="settings-panel">
-          <h2>Theme</h2>
+          <h2>Board Size</h2>
+          <div id="size-picker"></div>
+          <h2 style="margin-top: 20px;">Theme</h2>
           <div id="theme-picker"></div>
           <button id="btn-close-settings">Done</button>
         </div>
@@ -686,18 +716,20 @@
         return "E";
       }
 
-      function generateBoard() {
+      function generateBoard(size) {
+        const total = size * size;
         for (let attempt = 0; attempt < 20; attempt++) {
-          const cells = Array.from({ length: 16 }, () => weightedPick());
+          const cells = Array.from({ length: total }, () => weightedPick());
           const vc = cells.filter((c) => VOWELS.includes(c)).length;
           if (vc >= 3) return cells;
         }
-        // Fallback: force vowels
-        const cells = Array.from({ length: 16 }, () => weightedPick());
+        // Fallback: force vowels at spread positions
+        const cells = Array.from({ length: total }, () => weightedPick());
         cells[0] = "A";
-        cells[3] = "E";
-        cells[7] = "I";
-        cells[12] = "O";
+        cells[size - 1] = "E";
+        const mid = Math.floor(total / 2);
+        if (cells[mid] && !VOWELS.includes(cells[mid])) cells[mid] = "I";
+        cells[total - 1] = "O";
         return cells;
       }
 
@@ -748,23 +780,24 @@
       // BOARD RENDER
       // ============================================================
       function renderBoard() {
+        const n = S.gridSize;
         const cells = boardEl.children;
 
         // Determine live path status
         let pathStatus = "";
         if (S.selection.length >= 3) {
-          const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+          const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
           const lower = word.toLowerCase();
           if (wordSet && wordSet.has(lower)) {
             pathStatus = S.foundWords.has(word) ? "dup" : "valid";
           }
         }
 
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < n * n; i++) {
           const cell = cells[i];
           cell.textContent = S.board[i];
-          const row = Math.floor(i / 4);
-          const col = i % 4;
+          const row = Math.floor(i / n);
+          const col = i % n;
           const si = S.selection.findIndex((t) => t.r === row && t.c === col);
           cell.className = "cell";
           if (si >= 0) {
@@ -776,12 +809,13 @@
         }
         // Current word display
         currentWordEl.className = "";
-        const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+        const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
         currentWordEl.textContent = word || " ";
         drawLines(pathStatus);
       }
 
       function drawLines(status) {
+        const n = S.gridSize;
         const dpr = window.devicePixelRatio || 1;
         const rect = boardWrapper.getBoundingClientRect();
         canvas.width = rect.width * dpr;
@@ -802,7 +836,7 @@
         // Get cell centers relative to canvas
         const cells = boardEl.children;
         const points = S.selection.map((t) => {
-          const el = cells[t.r * 4 + t.c];
+          const el = cells[t.r * n + t.c];
           const cr = el.getBoundingClientRect();
           return {
             x: cr.left - rect.left + cr.width / 2,
@@ -828,14 +862,13 @@
       let dragging = false;
 
       function tileAtPoint(x, y) {
+        const n = S.gridSize;
         const rect = boardEl.getBoundingClientRect();
-        const w = rect.width / 4;
-        const h = rect.height / 4;
-        // Compute raw cell position
+        const w = rect.width / n;
+        const h = rect.height / n;
         const col = Math.floor((x - rect.left) / w);
         const row = Math.floor((y - rect.top) / h);
-        if (row < 0 || row > 3 || col < 0 || col > 3) return null;
-        // Shrink hitbox: only count if finger is well inside the cell
+        if (row < 0 || row >= n || col < 0 || col >= n) return null;
         const cx = rect.left + (col + 0.5) * w;
         const cy = rect.top + (row + 0.5) * h;
         const hw = w * CONFIG.tileHitboxSize;
@@ -899,7 +932,8 @@
       // WORD SUBMISSION
       // ============================================================
       function submitWord() {
-        const word = S.selection.map((t) => S.board[t.r * 4 + t.c]).join("");
+        const n = S.gridSize;
+        const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
         S.selection = [];
         renderBoard();
 
@@ -954,15 +988,22 @@
       // NEW GAME
       // ============================================================
       function newGame() {
-        S.board = generateBoard();
+        S.board = generateBoard(S.gridSize);
         S.selection = [];
         S.foundWords = new Set();
         S.foundList = [];
         S.score = 0;
 
-        // Build board DOM
+        const n = S.gridSize;
+        // Set CSS grid template
+        boardEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+        boardEl.style.gridTemplateRows = `repeat(${n}, 1fr)`;
+        // Scale font size for larger grids
+        const fs = n <= 4 ? 'clamp(28px, 7vw, 44px)' : n === 5 ? 'clamp(22px, 5.5vw, 34px)' : 'clamp(18px, 4.5vw, 28px)';
+        boardEl.style.setProperty('--cell-fs', fs);
+
         boardEl.innerHTML = "";
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < n * n; i++) {
           const div = document.createElement("div");
           div.className = "cell";
           boardEl.appendChild(div);
@@ -1012,6 +1053,32 @@
       }
 
       // ============================================================
+      // BOARD SIZE
+      // ============================================================
+      function setBoardSize(size) {
+        S.gridSize = size;
+        localStorage.setItem("wh-size", String(size));
+        document.querySelectorAll(".size-btn").forEach((el) => {
+          el.classList.toggle("active", Number(el.dataset.size) === size);
+        });
+        newGame();
+      }
+
+      function buildSizePicker() {
+        const container = document.getElementById("size-picker");
+        const saved = Number(localStorage.getItem("wh-size")) || 4;
+        S.gridSize = saved;
+        for (const size of (CONFIG.boardSizes || [4, 5, 6])) {
+          const btn = document.createElement("button");
+          btn.className = "size-btn" + (size === saved ? " active" : "");
+          btn.dataset.size = size;
+          btn.textContent = size + "×" + size;
+          btn.addEventListener("click", () => setBoardSize(size));
+          container.appendChild(btn);
+        }
+      }
+
+      // ============================================================
       // INIT
       // ============================================================
       document.getElementById("btn-new").addEventListener("click", newGame);
@@ -1032,6 +1099,7 @@
         if (saved) document.body.setAttribute("data-theme", saved);
       })();
 
+      buildSizePicker();
       buildThemePicker();
       init();
     </script>
