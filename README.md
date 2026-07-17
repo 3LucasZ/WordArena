@@ -15,3 +15,6 @@
 - Word dictionary
   - https://github.com/dwyl/english-words (popular)
   - filter to 3+ letter lowercase words, no upper bound
+- Settings
+  - Modal popup
+  - Color / theme picker
