@@ -1,5 +1,11 @@
 # WordArena
 
+- Interface
+  - Drag to select
+  - Type to select
+    - a-z
+    - Escape
+    - Enter / space
 - Creating a new letter sequence
   - going back on a letter should not toggle it off
   - if you don't want a letter sequence anymore, releasing should be the only way to reset it
@@ -15,6 +21,9 @@
 - Word dictionary
   - https://github.com/dwyl/english-words (popular)
   - filter to 3+ letter lowercase words, no upper bound
+- Points
+  - 100 for length 3
+  - 400 for length 4 (add 400 per extra letter)
 - Settings
   - Modal popup
   - Color / theme picker
