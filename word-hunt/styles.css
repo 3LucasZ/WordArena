@@ -46,11 +46,11 @@ body[data-theme="cream"] {
   --text-dim: rgba(44, 36, 26, 0.45);
   --text-muted: rgba(44, 36, 26, 0.3);
   --text-faint: rgba(44, 36, 26, 0.15);
-  --glass-bg: rgba(0, 0, 0, 0.04);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --board-bg: rgba(0, 0, 0, 0.02);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --board-bg: rgba(0, 0, 0, 0.04);
   --word-bg: rgba(0, 0, 0, 0.02);
-  --control-bg: rgba(0, 0, 0, 0.06);
+  --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
 }
 body[data-theme="sky"] {
@@ -61,11 +61,11 @@ body[data-theme="sky"] {
   --text-dim: rgba(26, 42, 58, 0.45);
   --text-muted: rgba(26, 42, 58, 0.3);
   --text-faint: rgba(26, 42, 58, 0.15);
-  --glass-bg: rgba(255, 255, 255, 0.25);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --board-bg: rgba(255, 255, 255, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(26, 42, 58, 0.12);
+  --board-bg: rgba(255, 255, 255, 0.25);
   --word-bg: rgba(255, 255, 255, 0.15);
-  --control-bg: rgba(0, 0, 0, 0.06);
+  --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
 }
 body[data-theme="mint"] {
@@ -76,11 +76,11 @@ body[data-theme="mint"] {
   --text-dim: rgba(26, 44, 26, 0.45);
   --text-muted: rgba(26, 44, 26, 0.3);
   --text-faint: rgba(26, 44, 26, 0.15);
-  --glass-bg: rgba(255, 255, 255, 0.25);
-  --glass-border: rgba(255, 255, 255, 0.35);
-  --board-bg: rgba(255, 255, 255, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(26, 44, 26, 0.12);
+  --board-bg: rgba(255, 255, 255, 0.25);
   --word-bg: rgba(255, 255, 255, 0.15);
-  --control-bg: rgba(0, 0, 0, 0.06);
+  --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
 }
 body {
@@ -282,30 +282,6 @@ header h1 {
   color: var(--text-muted);
   letter-spacing: normal;
   font-weight: 400;
-}
-
-/* ---- SCORE POPUP ---- */
-#score-popup {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  font-size: 28px;
-  font-weight: 800;
-  color: #34c759;
-  pointer-events: none;
-  z-index: 10;
-  text-shadow: 0 2px 12px rgba(52, 199, 89, 0.4);
-  opacity: 0;
-  transition: none;
-}
-#score-popup.show {
-  animation: scorePopup 0.8s ease-out forwards;
-}
-@keyframes scorePopup {
-  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-  30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-  70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
 /* ---- WORD LIST ---- */

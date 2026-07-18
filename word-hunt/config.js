@@ -8,5 +8,5 @@ const CONFIG = {
   tileHitboxSize: 0.4,
 
   // Board size options shown in settings (can be overridden via settings UI)
-  boardSizes: [4, 5, 6],
+  boardSizes: [5, 6],
 };

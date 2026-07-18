@@ -63,7 +63,6 @@ const scoreEl = document.getElementById("score");
 const wordsContainer = document.getElementById("words-container");
 const wordsCountEl = document.getElementById("words-count");
 const loadingOverlay = document.getElementById("loading-overlay");
-const scorePopupEl = document.getElementById("score-popup");
 
 // ============================================================
 // BOARD RENDER
@@ -297,17 +296,9 @@ function submitWord() {
     S.score += wordScore(word);
     updateScore();
     renderFoundWords();
-    showScorePopup(wordScore(word));
   }
 }
 
-function showScorePopup(pts) {
-  scorePopupEl.textContent = `+${pts}`;
-  scorePopupEl.className = "show";
-  setTimeout(() => {
-    scorePopupEl.className = "";
-  }, 800);
-}
 
 function updateScore() {
   scoreEl.textContent = S.score;
@@ -334,7 +325,7 @@ function renderFoundWords() {
       if (found) div.classList.add("found");
       div.innerHTML =
         `<span class="word-text">${entry.word}</span>` +
-        `<span class="word-score">${found ? "★" : ""}${entry.score}</span>`;
+        `<span class="word-score">${entry.score}</span>`;
       wordsContainer.appendChild(div);
     }
     return;
