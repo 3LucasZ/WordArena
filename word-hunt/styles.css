@@ -113,7 +113,8 @@ body {
   gap: 0;
 }
 @media (max-width: 480px) {
-  #game { padding: 16px 8px; }
+  #game { padding: 16px 0; }
+  #board-wrapper { max-width: none; }
 }
 
 /* ---- LOADING SCREEN ---- */
@@ -552,6 +553,25 @@ header h1 {
 }
 #btn-close-settings:active {
   transform: scale(0.96);
+}
+#btn-mute {
+  padding: 8px 24px;
+  border: 2px solid var(--glass-border);
+  border-radius: 10px;
+  background: var(--control-bg);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.2s, background 0.2s;
+}
+#btn-mute:active {
+  transform: scale(0.96);
+}
+#btn-mute.muted {
+  border-color: rgba(255, 69, 58, 0.5);
+  background: rgba(255, 69, 58, 0.1);
 }
 
 /* ---- HELPER ---- */

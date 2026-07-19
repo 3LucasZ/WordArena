@@ -66,7 +66,7 @@ async function loadSelectSound() {
 }
 
 function playCorrect(len) {
-  if (!correctAudioBuffer) return;
+  if (!correctAudioBuffer || S.muted) return;
   try {
     const ac = getAudioCtx();
     const source = ac.createBufferSource();
@@ -82,7 +82,7 @@ function playCorrect(len) {
 }
 
 function playSelect() {
-  if (!selectAudioBuffer) return;
+  if (!selectAudioBuffer || S.muted) return;
   try {
     const ac = getAudioCtx();
     const source = ac.createBufferSource();
@@ -135,6 +135,7 @@ const S = {
   solutionsList: null,
   editMode: false,
   editCell: null,
+  muted: localStorage.getItem("wh-muted") === "true",
 };
 
 // ============================================================
@@ -642,6 +643,8 @@ document.getElementById("btn-edit").addEventListener("click", () => {
 });
 document.getElementById("btn-settings").addEventListener("click", () => {
   document.getElementById("settings-modal").classList.add("open");
+  document.getElementById("version-display").textContent = "v" + CONFIG.version;
+  updateMuteBtn();
 });
 document.getElementById("btn-close-settings").addEventListener("click", () => {
   document.getElementById("settings-modal").classList.remove("open");
@@ -649,6 +652,22 @@ document.getElementById("btn-close-settings").addEventListener("click", () => {
 document.getElementById("settings-modal").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
 });
+
+document.getElementById("btn-hard-reload").addEventListener("click", () => {
+  location.reload(true);
+});
+
+function updateMuteBtn() {
+  const btn = document.getElementById("btn-mute");
+  btn.textContent = S.muted ? "Unmute" : "Mute";
+  btn.classList.toggle("muted", S.muted);
+}
+document.getElementById("btn-mute").addEventListener("click", () => {
+  S.muted = !S.muted;
+  localStorage.setItem("wh-muted", S.muted);
+  updateMuteBtn();
+});
+
 
 (function restoreTheme() {
   const saved = localStorage.getItem("wh-theme");

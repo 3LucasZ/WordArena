@@ -21,4 +21,7 @@ const CONFIG = {
 
   // Volume for the letter-select sound (0 to 1).
   selectSoundVolume: 0.3,
+
+  // App version — bump this to know your latest updates applied.
+  version: "1.0.0",
 };
