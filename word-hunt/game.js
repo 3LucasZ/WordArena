@@ -43,14 +43,24 @@ function getAudioCtx() {
   return audioCtx;
 }
 
+/** Decode audio data using an OfflineAudioContext (no user gesture needed). */
+function offlineDecode(arrayBuffer) {
+  try {
+    const ctx = new OfflineAudioContext(1, 1, 44100);
+    return ctx.decodeAudioData(arrayBuffer.slice(0));
+  } catch (_) {
+    return null;
+  }
+}
+
 async function loadCorrectSound() {
   try {
     console.time("fetch correct sound");
     const resp = await fetch(CONFIG.correctSoundFile);
     if (!resp.ok) return;
-    const arrayBuffer = await resp.arrayBuffer();
+    const buf = await resp.arrayBuffer();
     console.timeEnd("fetch correct sound");
-    correctAudioBuffer = await getAudioCtx().decodeAudioData(arrayBuffer);
+    correctAudioBuffer = await offlineDecode(buf);
   } catch (_) {}
 }
 
@@ -59,9 +69,9 @@ async function loadSelectSound() {
     console.time("fetch select sound");
     const resp = await fetch(CONFIG.selectSoundFile);
     if (!resp.ok) return;
-    const arrayBuffer = await resp.arrayBuffer();
+    const buf = await resp.arrayBuffer();
     console.timeEnd("fetch select sound");
-    selectAudioBuffer = await getAudioCtx().decodeAudioData(arrayBuffer);
+    selectAudioBuffer = await offlineDecode(buf);
   } catch (_) {}
 }
 
@@ -531,9 +541,10 @@ function newGame() {
     n <= 4
       ? "clamp(28px, 7vw, 44px)"
       : n === 5
-        ? "clamp(22px, 5.5vw, 34px)"
-        : "clamp(18px, 4.5vw, 28px)";
+        ? "clamp(24px, 7vw, 38px)"
+        : "clamp(20px, 6vw, 32px)";
   boardEl.style.setProperty("--cell-fs", fs);
+  boardEl.dataset.size = n;
 
   boardEl.innerHTML = "";
   for (let i = 0; i < n * n; i++) {

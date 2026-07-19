@@ -23,5 +23,5 @@ const CONFIG = {
   selectSoundVolume: 0.3,
 
   // App version — bump this to know your latest updates applied.
-  version: "1.0.0",
+  version: "1.0.2",
 };
