@@ -37,13 +37,9 @@ const VOWELS = ["A", "E", "I", "O", "U"];
 let correctAudioBuffer = null;
 let selectAudioBuffer = null;
 let audioCtx = null;
-let audioCtxReady = Promise.resolve();
 
-async function getAudioCtx() {
+function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === "suspended") {
-    await audioCtx.resume();
-  }
   return audioCtx;
 }
 
@@ -69,10 +65,10 @@ async function loadSelectSound() {
   } catch (_) {}
 }
 
-async function playCorrect(len) {
+function playCorrect(len) {
   if (!correctAudioBuffer) return;
   try {
-    const ac = await getAudioCtx();
+    const ac = getAudioCtx();
     const source = ac.createBufferSource();
     source.buffer = correctAudioBuffer;
     const rate = 1 + (len - 3) * 0.06;
@@ -85,10 +81,10 @@ async function playCorrect(len) {
   } catch (_) {}
 }
 
-async function playSelect() {
+function playSelect() {
   if (!selectAudioBuffer) return;
   try {
-    const ac = await getAudioCtx();
+    const ac = getAudioCtx();
     const source = ac.createBufferSource();
     source.buffer = selectAudioBuffer;
     const gain = ac.createGain();
@@ -264,7 +260,13 @@ function isAdj(a, b) {
   );
 }
 
+function warmAudio() {
+  const ac = getAudioCtx();
+  if (ac.state === "suspended") ac.resume();
+}
+
 function onPointerDown(e) {
+  warmAudio();
   const tile = tileAtPoint(e.clientX, e.clientY);
   if (!tile) return;
 
@@ -348,6 +350,7 @@ function findPath(board, n, seq) {
 }
 
 document.addEventListener("keydown", (e) => {
+  warmAudio();
   const key = e.key;
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
@@ -656,7 +659,12 @@ buildSizePicker();
 buildThemePicker();
 
 async function init() {
-  const ok = await loadWords();
+  // Kick off all fetches in parallel
+  const [ok] = await Promise.all([
+    loadWords(),
+    loadCorrectSound(),
+    loadSelectSound(),
+  ]);
   loadingOverlay.classList.add("hidden");
   if (!ok) {
     document.body.innerHTML =
@@ -667,8 +675,6 @@ async function init() {
       "</div>";
     return;
   }
-  loadCorrectSound();
-  loadSelectSound();
   if (ok) newGame();
 }
 
