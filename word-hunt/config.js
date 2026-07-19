@@ -12,4 +12,13 @@ const CONFIG = {
 
   // Sound effect played when finding a correct word. Relative to the game root.
   correctSoundFile: "assets/correct1.mp3",
+
+  // Sound effect played when selecting a letter. Relative to the game root.
+  selectSoundFile: "assets/select1.mp3",
+
+  // Volume for the correct-word sound (0 to 1).
+  correctSoundVolume: 0.3,
+
+  // Volume for the letter-select sound (0 to 1).
+  selectSoundVolume: 0.3,
 };

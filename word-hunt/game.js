@@ -35,27 +35,61 @@ const LETTERS = Object.keys(WEIGHTS);
 const VOWELS = ["A", "E", "I", "O", "U"];
 
 let correctAudioBuffer = null;
+let selectAudioBuffer = null;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
 
 async function loadCorrectSound() {
   try {
+    console.time("fetch correct sound");
     const resp = await fetch(CONFIG.correctSoundFile);
     if (!resp.ok) return;
     const arrayBuffer = await resp.arrayBuffer();
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
-    correctAudioBuffer = await ac.decodeAudioData(arrayBuffer);
+    console.timeEnd("fetch correct sound");
+    correctAudioBuffer = await getAudioCtx().decodeAudioData(arrayBuffer);
+  } catch (_) {}
+}
+
+async function loadSelectSound() {
+  try {
+    console.time("fetch select sound");
+    const resp = await fetch(CONFIG.selectSoundFile);
+    if (!resp.ok) return;
+    const arrayBuffer = await resp.arrayBuffer();
+    console.timeEnd("fetch select sound");
+    selectAudioBuffer = await getAudioCtx().decodeAudioData(arrayBuffer);
   } catch (_) {}
 }
 
 function playCorrect(len) {
   if (!correctAudioBuffer) return;
   try {
-    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const ac = getAudioCtx();
     const source = ac.createBufferSource();
     source.buffer = correctAudioBuffer;
     const rate = 1 + (len - 3) * 0.06;
     source.playbackRate.setValueAtTime(rate, ac.currentTime);
     const gain = ac.createGain();
-    gain.gain.setValueAtTime(0.5, ac.currentTime);
+    gain.gain.setValueAtTime(CONFIG.correctSoundVolume, ac.currentTime);
+    source.connect(gain);
+    gain.connect(ac.destination);
+    source.start(ac.currentTime);
+  } catch (_) {}
+}
+
+function playSelect() {
+  if (!selectAudioBuffer) return;
+  try {
+    const ac = getAudioCtx();
+    const source = ac.createBufferSource();
+    source.buffer = selectAudioBuffer;
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(CONFIG.selectSoundVolume, ac.currentTime);
     source.connect(gain);
     gain.connect(ac.destination);
     source.start(ac.currentTime);
@@ -128,7 +162,7 @@ function renderBoard() {
   if (S.selection.length >= 3) {
     const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
     const lower = word.toLowerCase();
-    if (wordSet && wordSet.has(lower)) {
+    if (isValidWord(lower)) {
       pathStatus = S.foundWords.has(word) ? "dup" : "valid";
     }
   }
@@ -253,6 +287,7 @@ function onPointerMove(e) {
   if (S.selection.some((t) => t.r === tile.r && t.c === tile.c)) return;
   if (!isAdj(tile, last)) return;
   S.selection.push(tile);
+  playSelect();
   renderBoard();
 }
 
@@ -357,6 +392,7 @@ document.addEventListener("keydown", (e) => {
     const path = findPath(S.board, n, seq);
     if (path) {
       S.selection = path;
+      playSelect();
       renderBoard();
     }
   }
@@ -390,8 +426,7 @@ function submitWord() {
 
   if (
     word.length >= 3 &&
-    wordSet &&
-    wordSet.has(word.toLowerCase()) &&
+    isValidWord(word.toLowerCase()) &&
     !S.foundWords.has(word)
   ) {
     navigator.vibrate?.(15);
@@ -620,6 +655,7 @@ async function init() {
   const ok = await loadWords();
   loadingOverlay.classList.add("hidden");
   loadCorrectSound();
+  loadSelectSound();
   if (ok) newGame();
 }
 

@@ -1,14 +1,19 @@
-// Word Arena — word list, trie, and solver
-let wordSet = null;
+// Word Arena — pre-built trie and solver
 let solutionsTrie = null;
 
 async function loadWords() {
   try {
-    const resp = await fetch("words_raw.txt");
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    const text = await resp.text();
-    wordSet = new Set(text.trim().split("\n"));
-    buildSolutionsTrie();
+    console.time("fetch");
+    const resp = await fetch("assets/trie.json.gz");
+    const compressed = await resp.arrayBuffer();
+    console.timeEnd("fetch");
+
+    console.time("decompress+parse");
+    const ds = new DecompressionStream("gzip");
+    solutionsTrie = await new Response(
+      new ReadableStream({ start(ctrl) { ctrl.enqueue(new Uint8Array(compressed)); ctrl.close(); } }).pipeThrough(ds)
+    ).json();
+    console.timeEnd("decompress+parse");
     return true;
   } catch (e) {
     const p = document.querySelector("#loading-overlay p");
@@ -19,19 +24,14 @@ async function loadWords() {
   }
 }
 
-function buildSolutionsTrie() {
-  if (solutionsTrie) return;
-  const root = {};
-  for (const word of wordSet) {
-    if (word.length < 4) continue;
-    let node = root;
-    for (const ch of word) {
-      if (!node[ch]) node[ch] = {};
-      node = node[ch];
-    }
-    node.$ = true;
+function isValidWord(word) {
+  if (!solutionsTrie) return false;
+  let node = solutionsTrie;
+  for (const ch of word) {
+    if (!node[ch]) return false;
+    node = node[ch];
   }
-  solutionsTrie = root;
+  return node.$ === 1;
 }
 
 function findAllWords(board, n) {
