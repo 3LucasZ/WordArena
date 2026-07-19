@@ -105,6 +105,11 @@ function playSelect() {
   } catch (_) {}
 }
 
+function accentRgba(alpha) {
+  const rgb = getComputedStyle(document.body).getPropertyValue('--accent-rgb').trim();
+  return `rgba(${rgb},${alpha})`;
+}
+
 function weightedPick() {
   let total = 0;
   for (const l of LETTERS) total += WEIGHTS[l];
@@ -216,7 +221,7 @@ function drawLines(status) {
 
   if (S.selection.length < 2) return;
 
-  let color = "rgba(74,144,217,0.5)";
+  let color = accentRgba(0.5);
   if (status === "valid") color = "rgba(52,199,89,0.6)";
   else if (status === "dup") color = "rgba(255,149,0,0.6)";
 

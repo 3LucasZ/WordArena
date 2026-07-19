@@ -22,6 +22,8 @@
   --scroll: rgba(255, 255, 255, 0.15);
   --hdr-a: #4a90d9;
   --hdr-b: #7c5cbf;
+  --accent: #4a90d9;
+  --accent-rgb: 74, 144, 217;
 }
 body[data-theme="true-dark"] {
   --bg-a: #0a0a0a;
@@ -52,6 +54,8 @@ body[data-theme="cream"] {
   --word-bg: rgba(0, 0, 0, 0.02);
   --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
+  --accent: #c8823a;
+  --accent-rgb: 200, 130, 58;
 }
 body[data-theme="sky"] {
   --bg-a: #e3f0fa;
@@ -67,6 +71,8 @@ body[data-theme="sky"] {
   --word-bg: rgba(255, 255, 255, 0.15);
   --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
+  --accent: #3a7bb5;
+  --accent-rgb: 58, 123, 181;
 }
 body[data-theme="mint"] {
   --bg-a: #e8f4e8;
@@ -82,6 +88,8 @@ body[data-theme="mint"] {
   --word-bg: rgba(255, 255, 255, 0.15);
   --control-bg: rgba(0, 0, 0, 0.08);
   --scroll: rgba(0, 0, 0, 0.12);
+  --accent: #3a9b5a;
+  --accent-rgb: 58, 155, 90;
 }
 body {
   margin: 0;
@@ -146,7 +154,7 @@ body {
   width: 48px;
   height: 48px;
   border: 4px solid var(--glass-border);
-  border-top-color: #4a90d9;
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -257,9 +265,9 @@ header h1 {
   z-index: 2;
 }
 .cell.selected {
-  background: rgba(74, 144, 217, 0.3);
-  border-color: rgba(74, 144, 217, 0.5);
-  box-shadow: 0 0 16px rgba(74, 144, 217, 0.2);
+  background: rgba(var(--accent-rgb), 0.3);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.2);
   transform: scale(0.95);
 }
 .cell.selected-valid,
@@ -277,9 +285,9 @@ header h1 {
   transform: scale(0.95);
 }
 .cell.first {
-  background: rgba(74, 144, 217, 0.4);
-  border-color: rgba(74, 144, 217, 0.6);
-  box-shadow: 0 0 22px rgba(74, 144, 217, 0.35);
+  background: rgba(var(--accent-rgb), 0.4);
+  border-color: rgba(var(--accent-rgb), 0.6);
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.35);
   transform: scale(0.95);
 }
 .cell.edit-mode {
@@ -287,15 +295,15 @@ header h1 {
   animation: editPulse 1.5s ease-in-out infinite;
 }
 .cell.edit-selected {
-  background: rgba(74, 144, 217, 0.25);
-  border-color: rgba(74, 144, 217, 0.5);
-  box-shadow: 0 0 16px rgba(74, 144, 217, 0.25);
+  background: rgba(var(--accent-rgb), 0.25);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.25);
   transform: scale(0.95);
   animation: none;
 }
 @keyframes editPulse {
   0%, 100% { border-color: var(--glass-border); }
-  50% { border-color: rgba(74, 144, 217, 0.4); }
+  50% { border-color: rgba(var(--accent-rgb), 0.4); }
 }
 
 /* ---- CURRENT WORD ---- */
@@ -468,10 +476,10 @@ header h1 {
   transform: scale(0.92);
 }
 #btn-edit.active {
-  background: rgba(74, 144, 217, 0.3);
+  background: rgba(var(--accent-rgb), 0.3);
 }
 #btn-edit.active svg path {
-  stroke: #6ab0ff;
+  stroke: var(--accent);
 }
 
 #settings-modal {
@@ -554,7 +562,7 @@ header h1 {
 }
 .size-btn.active {
   border-color: var(--text);
-  background: rgba(74, 144, 217, 0.2);
+  background: rgba(var(--accent-rgb), 0.2);
 }
 #btn-close-settings {
   margin-top: 16px;
