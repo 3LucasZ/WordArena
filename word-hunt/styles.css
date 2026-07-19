@@ -422,12 +422,15 @@ header h1 {
   align-items: center;
   justify-content: center;
 }
-#btn-edit svg rect {
-  fill: var(--text-dim);
-  transition: fill 0.15s;
+#btn-edit svg path {
+  stroke: var(--text-dim);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s;
 }
-#btn-edit:hover svg rect {
-  fill: var(--text);
+#btn-edit:hover svg path {
+  stroke: var(--text);
 }
 #btn-settings svg path {
   fill: var(--text-dim);
@@ -443,8 +446,8 @@ header h1 {
 #btn-edit.active {
   background: rgba(74, 144, 217, 0.3);
 }
-#btn-edit.active svg rect {
-  fill: #6ab0ff;
+#btn-edit.active svg path {
+  stroke: #6ab0ff;
 }
 
 #settings-modal {
