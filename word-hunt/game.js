@@ -37,10 +37,13 @@ const VOWELS = ["A", "E", "I", "O", "U"];
 let correctAudioBuffer = null;
 let selectAudioBuffer = null;
 let audioCtx = null;
+let audioCtxReady = Promise.resolve();
 
-function getAudioCtx() {
+async function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === "suspended") audioCtx.resume();
+  if (audioCtx.state === "suspended") {
+    await audioCtx.resume();
+  }
   return audioCtx;
 }
 
@@ -66,10 +69,10 @@ async function loadSelectSound() {
   } catch (_) {}
 }
 
-function playCorrect(len) {
+async function playCorrect(len) {
   if (!correctAudioBuffer) return;
   try {
-    const ac = getAudioCtx();
+    const ac = await getAudioCtx();
     const source = ac.createBufferSource();
     source.buffer = correctAudioBuffer;
     const rate = 1 + (len - 3) * 0.06;
@@ -82,10 +85,10 @@ function playCorrect(len) {
   } catch (_) {}
 }
 
-function playSelect() {
+async function playSelect() {
   if (!selectAudioBuffer) return;
   try {
-    const ac = getAudioCtx();
+    const ac = await getAudioCtx();
     const source = ac.createBufferSource();
     source.buffer = selectAudioBuffer;
     const gain = ac.createGain();
@@ -275,6 +278,7 @@ function onPointerDown(e) {
   dragging = true;
   S.selection = [tile];
   boardEl.setPointerCapture(e.pointerId);
+  playSelect();
   renderBoard();
 }
 
@@ -654,6 +658,15 @@ buildThemePicker();
 async function init() {
   const ok = await loadWords();
   loadingOverlay.classList.add("hidden");
+  if (!ok) {
+    document.body.innerHTML =
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100dvh;padding:32px;color:var(--text);text-align:center;gap:16px">' +
+      '<p style="font-size:18px;font-weight:600">Failed to load word list</p>' +
+      '<p style="font-size:14px;color:var(--text-dim)">Make sure you are serving via HTTP (e.g. <code>python3 -m http.server 8080</code>) and refresh the page.</p>' +
+      '<button onclick="location.reload()" style="margin-top:8px;padding:12px 28px;border:none;border-radius:12px;background:rgba(255,255,255,0.1);color:var(--text);font-size:15px;font-weight:700;cursor:pointer">Retry</button>' +
+      "</div>";
+    return;
+  }
   loadCorrectSound();
   loadSelectSound();
   if (ok) newGame();

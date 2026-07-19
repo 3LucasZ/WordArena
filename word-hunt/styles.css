@@ -112,6 +112,9 @@ body {
   height: 100dvh;
   gap: 0;
 }
+@media (max-width: 480px) {
+  #game { padding: 16px 8px; }
+}
 
 /* ---- LOADING SCREEN ---- */
 #loading-overlay {
@@ -217,6 +220,9 @@ header h1 {
   background: var(--board-bg);
   border-radius: 16px;
   touch-action: none;
+}
+@media (max-width: 480px) {
+  #board { gap: 6px; padding: 6px; }
 }
 .cell {
   display: flex;
