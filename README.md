@@ -31,3 +31,5 @@
 - Constant config
   - Point assignment
   - Tile hitbox
+- Modes
+  - Round robin: multiplayer, each turn you must find a new word, if you can't you're out

@@ -4,12 +4,63 @@
 // LETTER DISTRIBUTION
 // ============================================================
 const WEIGHTS = {
-  A: 8, B: 2, C: 3, D: 4, E: 12, F: 2, G: 3, H: 2, I: 8,
-  J: 1, K: 1, L: 4, M: 2, N: 6, O: 8, P: 2, Q: 1, R: 6,
-  S: 4, T: 6, U: 4, V: 1, W: 2, X: 1, Y: 2, Z: 1,
+  A: 8,
+  B: 2,
+  C: 3,
+  D: 4,
+  E: 12,
+  F: 2,
+  G: 3,
+  H: 2,
+  I: 8,
+  J: 1,
+  K: 1,
+  L: 4,
+  M: 2,
+  N: 6,
+  O: 8,
+  P: 2,
+  Q: 1,
+  R: 6,
+  S: 4,
+  T: 6,
+  U: 4,
+  V: 1,
+  W: 2,
+  X: 1,
+  Y: 2,
+  Z: 1,
 };
 const LETTERS = Object.keys(WEIGHTS);
 const VOWELS = ["A", "E", "I", "O", "U"];
+
+let correctAudioBuffer = null;
+
+async function loadCorrectSound() {
+  try {
+    const resp = await fetch(CONFIG.correctSoundFile);
+    if (!resp.ok) return;
+    const arrayBuffer = await resp.arrayBuffer();
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    correctAudioBuffer = await ac.decodeAudioData(arrayBuffer);
+  } catch (_) {}
+}
+
+function playCorrect(len) {
+  if (!correctAudioBuffer) return;
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const source = ac.createBufferSource();
+    source.buffer = correctAudioBuffer;
+    const rate = 1 + (len - 3) * 0.06;
+    source.playbackRate.setValueAtTime(rate, ac.currentTime);
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(0.5, ac.currentTime);
+    source.connect(gain);
+    gain.connect(ac.destination);
+    source.start(ac.currentTime);
+  } catch (_) {}
+}
 
 function weightedPick() {
   let total = 0;
@@ -49,6 +100,8 @@ const S = {
   score: 0,
   showSolutions: false,
   solutionsList: null,
+  editMode: false,
+  editCell: null,
 };
 
 // ============================================================
@@ -87,7 +140,12 @@ function renderBoard() {
     const col = i % n;
     const si = S.selection.findIndex((t) => t.r === row && t.c === col);
     cell.className = "cell";
-    if (si >= 0) {
+    if (S.editMode) {
+      cell.classList.add("edit-mode");
+      if (S.editCell && S.editCell.r === row && S.editCell.c === col) {
+        cell.classList.add("edit-selected");
+      }
+    } else if (si >= 0) {
       if (pathStatus === "valid") cell.classList.add("selected-valid");
       else if (pathStatus === "dup") cell.classList.add("selected-dup");
       else cell.classList.add("selected");
@@ -172,6 +230,14 @@ function isAdj(a, b) {
 function onPointerDown(e) {
   const tile = tileAtPoint(e.clientX, e.clientY);
   if (!tile) return;
+
+  if (S.editMode) {
+    S.editCell = tile;
+    S.selection = [];
+    renderBoard();
+    return;
+  }
+
   dragging = true;
   S.selection = [tile];
   boardEl.setPointerCapture(e.pointerId);
@@ -179,7 +245,7 @@ function onPointerDown(e) {
 }
 
 function onPointerMove(e) {
-  if (!dragging) return;
+  if (!dragging || S.editMode) return;
   const tile = tileAtPoint(e.clientX, e.clientY);
   if (!tile) return;
   const last = S.selection[S.selection.length - 1];
@@ -191,7 +257,7 @@ function onPointerMove(e) {
 }
 
 function onPointerUp(e) {
-  if (!dragging) return;
+  if (!dragging || S.editMode) return;
   dragging = false;
   if (boardEl.hasPointerCapture(e.pointerId)) {
     boardEl.releasePointerCapture(e.pointerId);
@@ -204,7 +270,7 @@ boardEl.addEventListener("pointermove", onPointerMove);
 boardEl.addEventListener("pointerup", onPointerUp);
 boardEl.addEventListener("pointercancel", () => {
   dragging = false;
-  submitWord();
+  if (!S.editMode) submitWord();
 });
 
 // ============================================================
@@ -217,7 +283,8 @@ function findPath(board, n, seq) {
     for (let dr = -1; dr <= 1; dr++) {
       for (let dc = -1; dc <= 1; dc++) {
         if (dr === 0 && dc === 0) continue;
-        const nr = r + dr, nc = c + dc;
+        const nr = r + dr,
+          nc = c + dc;
         if (nr < 0 || nr >= n || nc < 0 || nc >= n) continue;
         if (visited.has(nr * n + nc)) continue;
         if (board[nr * n + nc] !== seq[i]) continue;
@@ -246,11 +313,47 @@ document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
+  if (S.editMode) {
+    if (/^[a-zA-Z]$/.test(key)) {
+      e.preventDefault();
+      if (S.editCell) {
+        S.board[S.editCell.r * S.gridSize + S.editCell.c] = key.toUpperCase();
+        S.solutionsList = null;
+        const next = S.editCell.r * S.gridSize + S.editCell.c + 1;
+        if (next < S.gridSize * S.gridSize) {
+          S.editCell = {
+            r: Math.floor(next / S.gridSize),
+            c: next % S.gridSize,
+          };
+        }
+        renderBoard();
+      }
+    }
+    if (key === "Backspace" && S.editCell) {
+      e.preventDefault();
+      S.board[S.editCell.r * S.gridSize + S.editCell.c] = "";
+      S.solutionsList = null;
+      const prev = S.editCell.r * S.gridSize + S.editCell.c - 1;
+      if (prev >= 0) {
+        S.editCell = {
+          r: Math.floor(prev / S.gridSize),
+          c: prev % S.gridSize,
+        };
+      }
+      renderBoard();
+    }
+    if (key === "Enter" || key === "Escape" || key === " ") {
+      e.preventDefault();
+      toggleEditMode();
+    }
+    return;
+  }
+
   if (/^[a-zA-Z]$/.test(key)) {
     e.preventDefault();
     const ch = key.toUpperCase();
     const n = S.gridSize;
-    const seq = S.selection.map(t => S.board[t.r * n + t.c]).join('') + ch;
+    const seq = S.selection.map((t) => S.board[t.r * n + t.c]).join("") + ch;
     const path = findPath(S.board, n, seq);
     if (path) {
       S.selection = path;
@@ -291,14 +394,27 @@ function submitWord() {
     wordSet.has(word.toLowerCase()) &&
     !S.foundWords.has(word)
   ) {
+    navigator.vibrate?.(15);
     S.foundWords.add(word);
     S.foundList.unshift({ word, score: wordScore(word) });
     S.score += wordScore(word);
     updateScore();
     renderFoundWords();
+    playCorrect(word.length);
+    flashScore();
   }
 }
 
+function flashScore() {
+  scoreEl.style.transition = "none";
+  scoreEl.style.color = "#34c759";
+  scoreEl.style.transform = "scale(1.3)";
+  requestAnimationFrame(() => {
+    scoreEl.style.transition = "color 0.4s, transform 0.4s";
+    scoreEl.style.color = "";
+    scoreEl.style.transform = "";
+  });
+}
 
 function updateScore() {
   scoreEl.textContent = S.score;
@@ -314,7 +430,9 @@ function renderFoundWords() {
     if (!S.solutionsList) {
       const found = findAllWords(S.board, S.gridSize);
       S.solutionsList = Array.from(found, ([word, score]) => ({ word, score }));
-      S.solutionsList.sort((a, b) => b.score - a.score || a.word.localeCompare(b.word));
+      S.solutionsList.sort(
+        (a, b) => b.score - a.score || a.word.localeCompare(b.word),
+      );
     }
 
     wordsCountEl.textContent = S.solutionsList.length;
@@ -357,13 +475,22 @@ function newGame() {
   S.score = 0;
   S.showSolutions = false;
   S.solutionsList = null;
+  S.editMode = false;
+  S.editCell = null;
   document.getElementById("solutions-btn").textContent = "SOLUTIONS";
+  const editBtn = document.getElementById("btn-edit");
+  if (editBtn) editBtn.classList.remove("active");
 
   const n = S.gridSize;
   boardEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
   boardEl.style.gridTemplateRows = `repeat(${n}, 1fr)`;
-  const fs = n <= 4 ? 'clamp(28px, 7vw, 44px)' : n === 5 ? 'clamp(22px, 5.5vw, 34px)' : 'clamp(18px, 4.5vw, 28px)';
-  boardEl.style.setProperty('--cell-fs', fs);
+  const fs =
+    n <= 4
+      ? "clamp(28px, 7vw, 44px)"
+      : n === 5
+        ? "clamp(22px, 5.5vw, 34px)"
+        : "clamp(18px, 4.5vw, 28px)";
+  boardEl.style.setProperty("--cell-fs", fs);
 
   boardEl.innerHTML = "";
   for (let i = 0; i < n * n; i++) {
@@ -430,7 +557,7 @@ function buildSizePicker() {
   const container = document.getElementById("size-picker");
   const saved = Number(localStorage.getItem("wh-size")) || 4;
   S.gridSize = saved;
-  for (const size of (CONFIG.boardSizes || [4, 5, 6])) {
+  for (const size of CONFIG.boardSizes || [4, 5, 6]) {
     const btn = document.createElement("button");
     btn.className = "size-btn" + (size === saved ? " active" : "");
     btn.dataset.size = size;
@@ -441,12 +568,26 @@ function buildSizePicker() {
 }
 
 // ============================================================
+// EDIT MODE
+// ============================================================
+function toggleEditMode() {
+  S.editMode = !S.editMode;
+  if (!S.editMode) {
+    S.editCell = null;
+    S.solutionsList = null;
+  }
+  document.getElementById("btn-edit").classList.toggle("active", S.editMode);
+  renderBoard();
+}
+
+// ============================================================
 // SOLUTIONS TOGGLE
 // ============================================================
 document.getElementById("solutions-btn").addEventListener("click", () => {
   S.showSolutions = !S.showSolutions;
-  document.getElementById("solutions-btn").textContent =
-    S.showSolutions ? "FOUND" : "SOLUTIONS";
+  document.getElementById("solutions-btn").textContent = S.showSolutions
+    ? "FOUND"
+    : "SOLUTIONS";
   renderFoundWords();
 });
 
@@ -454,6 +595,9 @@ document.getElementById("solutions-btn").addEventListener("click", () => {
 // INIT
 // ============================================================
 document.getElementById("btn-new").addEventListener("click", newGame);
+document.getElementById("btn-edit").addEventListener("click", () => {
+  if (S.gridSize) toggleEditMode();
+});
 document.getElementById("btn-settings").addEventListener("click", () => {
   document.getElementById("settings-modal").classList.add("open");
 });
@@ -475,6 +619,7 @@ buildThemePicker();
 async function init() {
   const ok = await loadWords();
   loadingOverlay.classList.add("hidden");
+  loadCorrectSound();
   if (ok) newGame();
 }
 

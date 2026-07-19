@@ -8,5 +8,8 @@ const CONFIG = {
   tileHitboxSize: 0.4,
 
   // Board size options shown in settings (can be overridden via settings UI)
-  boardSizes: [5, 6],
+  boardSizes: [4, 5, 6],
+
+  // Sound effect played when finding a correct word. Relative to the game root.
+  correctSoundFile: "assets/correct1.mp3",
 };
