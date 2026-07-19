@@ -166,6 +166,16 @@ const wordsContainer = document.getElementById("words-container");
 const wordsCountEl = document.getElementById("words-count");
 const loadingOverlay = document.getElementById("loading-overlay");
 
+// Invisible input for iOS keyboard during edit mode
+const editInput = document.createElement("input");
+editInput.id = "edit-input";
+editInput.setAttribute("autocapitalize", "characters");
+editInput.setAttribute("autocomplete", "off");
+editInput.setAttribute("autocorrect", "off");
+editInput.setAttribute("spellcheck", "false");
+editInput.style.cssText = "position:fixed;top:-100px;left:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1";
+document.body.appendChild(editInput);
+
 // ============================================================
 // BOARD RENDER
 // ============================================================
@@ -365,14 +375,41 @@ function findPath(board, n, seq) {
   return null;
 }
 
+// Exit edit mode when iOS keyboard is dismissed
+editInput.addEventListener("blur", () => {
+  if (S.editMode) toggleEditMode();
+});
+
+editInput.addEventListener("input", () => {
+  if (!S.editMode || !S.editCell) return;
+  const val = editInput.value;
+  if (!val) return;
+  const ch = val.charAt(val.length - 1).toUpperCase();
+  if (/^[A-Z]$/.test(ch)) {
+    S.board[S.editCell.r * S.gridSize + S.editCell.c] = ch;
+    S.solutionsList = null;
+    const next = S.editCell.r * S.gridSize + S.editCell.c + 1;
+    if (next < S.gridSize * S.gridSize) {
+      S.editCell = { r: Math.floor(next / S.gridSize), c: next % S.gridSize };
+    }
+    renderBoard();
+  }
+  editInput.value = "";
+});
+
+
 document.addEventListener("keydown", (e) => {
   warmAudio();
   const key = e.key;
-  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+  if ((e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") && e.target !== editInput) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
   if (S.editMode) {
     if (/^[a-zA-Z]$/.test(key)) {
+      if (e.target === editInput) {
+        // Soft keyboard: let browser insert, input handler processes
+        return;
+      }
       e.preventDefault();
       if (S.editCell) {
         S.board[S.editCell.r * S.gridSize + S.editCell.c] = key.toUpperCase();
@@ -634,6 +671,11 @@ function toggleEditMode() {
   if (!S.editMode) {
     S.editCell = null;
     S.solutionsList = null;
+    editInput.blur();
+  } else {
+    // Bring up the soft keyboard on mobile
+    editInput.value = "";
+    editInput.focus();
   }
   document.getElementById("btn-edit").classList.toggle("active", S.editMode);
   renderBoard();
