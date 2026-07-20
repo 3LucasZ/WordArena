@@ -156,6 +156,7 @@ const S = {
   timerMode: null,    // null = infinite, 60/180/300 = seconds
   timeRemaining: null, // current countdown seconds, null if infinite
   timerInterval: null,
+  timerIncrement: 3,  // seconds added per word found
 };
 
 // ============================================================
@@ -187,6 +188,7 @@ document.body.appendChild(editInput);
 function renderBoard() {
   const n = S.gridSize;
   const cells = boardEl.children;
+  boardEl.classList.toggle("game-over", S.gameOver);
 
   let pathStatus = "";
   if (S.selection.length >= 3) {
@@ -540,7 +542,7 @@ function submitWord() {
     playCorrect(word.length);
     flashScore(word.length);
     if (S.timerMode != null) {
-      S.timeRemaining = Math.min(S.timeRemaining + CONFIG.timerIncrement, 99 * 60);
+      S.timeRemaining = Math.min(S.timeRemaining + S.timerIncrement, 99 * 60);
       updateTimerDisplay();
     }
   }
@@ -631,6 +633,8 @@ function updateScore() {
 // ============================================================
 function renderFoundWords() {
   wordsContainer.innerHTML = "";
+  const msg = document.getElementById("game-over-msg");
+  msg.classList.toggle("hidden", !S.gameOver);
 
   if (S.showSolutions) {
     if (!S.solutionsList) {
@@ -900,6 +904,11 @@ function formatTime(secs) {
 
 function updateTimerDisplay() {
   const el = document.getElementById("timer-display");
+  if (S.gameOver) {
+    el.textContent = "TIME!";
+    document.getElementById("timer-stat").classList.add("low");
+    return;
+  }
   if (S.timerMode == null) {
     el.textContent = "∞";
     document.getElementById("timer-stat").classList.remove("low");
@@ -940,14 +949,8 @@ function gameOver() {
   S.gameOver = true;
   S.selection = [];
   renderBoard();
-  document.getElementById("final-score").textContent = S.score;
-  document.getElementById("final-words").textContent = S.foundList.length;
-  document.getElementById("game-over-overlay").classList.add("open");
-}
-
-function gameOverNewGame() {
-  document.getElementById("game-over-overlay").classList.remove("open");
-  newGame();
+  updateTimerDisplay();
+  renderFoundWords();
 }
 
 // ============================================================
@@ -994,6 +997,34 @@ function setTimerMode(seconds) {
   // If game hasn't started yet, the timer picks up on next newGame
 }
 
+const INCREMENTS = [0, 1, 2, 3];
+
+function buildIncrementPicker() {
+  const container = document.getElementById("increment-picker");
+  const saved = (() => {
+    const v = localStorage.getItem("wh-inc");
+    return v != null ? Number(v) : CONFIG.timerIncrement;
+  })();
+  S.timerIncrement = saved;
+
+  for (const inc of INCREMENTS) {
+    const btn = document.createElement("button");
+    btn.className = "inc-btn" + (saved === inc ? " active" : "");
+    btn.dataset.inc = inc;
+    btn.textContent = "+" + inc;
+    btn.addEventListener("click", () => setIncrement(inc));
+    container.appendChild(btn);
+  }
+}
+
+function setIncrement(inc) {
+  S.timerIncrement = inc;
+  localStorage.setItem("wh-inc", String(inc));
+  document.querySelectorAll(".inc-btn").forEach((el) => {
+    el.classList.toggle("active", Number(el.dataset.inc) === inc);
+  });
+}
+
 // ============================================================
 // SOLUTIONS TOGGLE
 // ============================================================
@@ -1020,19 +1051,12 @@ document.getElementById("btn-settings").addEventListener("click", () => {
   document.getElementById("version-display").textContent = "v" + CONFIG.version;
   updateMuteBtn();
 });
-document.getElementById("btn-close-settings").addEventListener("click", () => {
-  document.getElementById("settings-modal").classList.remove("open");
-});
 document.getElementById("settings-modal").addEventListener("click", (e) => {
   if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
 });
 
 document.getElementById("btn-hard-reload").addEventListener("click", () => {
   location.reload(true);
-});
-document.getElementById("btn-new-after-gameover").addEventListener("click", gameOverNewGame);
-document.getElementById("game-over-overlay").addEventListener("click", (e) => {
-  if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
 });
 
 function updateMuteBtn() {
@@ -1053,6 +1077,7 @@ document.getElementById("btn-mute").addEventListener("click", () => {
 buildSizePicker();
 buildThemePicker();
 buildTimerPicker();
+buildIncrementPicker();
 updateTimerDisplay();
 
 async function init() {

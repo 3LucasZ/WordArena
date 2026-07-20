@@ -719,67 +719,41 @@ header h1 {
   border-color: var(--text);
   background: rgba(var(--accent-rgb), 0.2);
 }
-
-/* ---- GAME OVER ---- */
-#game-over-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 60;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s;
-}
-#game-over-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-#game-over-panel {
-  background: var(--bg-b);
-  border-radius: 24px;
-  padding: 36px 32px 28px;
-  width: 260px;
-  text-align: center;
-  animation: game-over-pop 0.3s ease-out;
-}
-@keyframes game-over-pop {
-  0% { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-#game-over-panel h2 {
-  font-size: 28px;
-  font-weight: 800;
-  color: #ff3b30;
-  margin-bottom: 16px;
-}
-#game-over-panel p {
-  font-size: 18px;
-  margin: 8px 0;
+#increment-picker { display: flex; gap: 6px; justify-content: center; }
+.inc-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: var(--glass-bg);
   color: var(--text);
-}
-#game-over-panel .game-over-score span,
-#game-over-panel .game-over-words span {
-  font-weight: 700;
-  color: var(--text);
-}
-#btn-new-after-gameover {
-  margin-top: 20px;
-  padding: 12px 36px;
-  border: none;
-  border-radius: 14px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
-  transition: transform 0.1s;
+  transition: transform 0.1s, border-color 0.2s, background 0.2s;
 }
-#btn-new-after-gameover:active {
-  transform: scale(0.95);
+.inc-btn:active { transform: scale(0.92); }
+.inc-btn.active {
+  border-color: var(--text);
+  background: rgba(var(--accent-rgb), 0.2);
 }
+
+/* ---- GAME OVER ---- */
+#board.game-over {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+.game-over-msg {
+  padding: 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.game-over-msg.hidden { display: none; }
+

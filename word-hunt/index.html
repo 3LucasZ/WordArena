@@ -43,6 +43,7 @@
             <button id="solutions-btn" class="solutions-btn">SOLUTIONS</button>
           </span>
         </div>
+        <div id="game-over-msg" class="game-over-msg hidden">Time's Up!</div>
         <div id="words-container">
           <div class="empty-state">
             Drag across adjacent letters to find words
@@ -81,6 +82,8 @@
           <div id="theme-picker"></div>
           <h2 style="margin-top: 20px">Timer</h2>
           <div id="timer-picker"></div>
+          <h3 style="margin-top: 12px; font-size: 13px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px;">INCREMENT / WORD</h3>
+          <div id="increment-picker" style="margin-top: 8px;"></div>
           <div style="margin-top: 16px;">
             <button id="btn-mute">
               <svg width="20" height="20" viewBox="0 0 24 24" class="icon-on" fill="none">
@@ -94,21 +97,11 @@
               </svg>
             </button>
           </div>
-          <button id="btn-close-settings">Done</button>
           <div style="margin-top: 16px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
             <button id="btn-hard-reload" style="background:none;border:none;color:var(--text-faint);font-size:11px;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">Hard Reload</button>
             <div id="version-display" style="font-size: 11px; color: var(--text-faint);"></div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <div id="game-over-overlay">
-      <div id="game-over-panel">
-        <h2>Time's Up!</h2>
-        <p class="game-over-score">Score: <span id="final-score">0</span></p>
-        <p class="game-over-words">Words: <span id="final-words">0</span></p>
-        <button id="btn-new-after-gameover">New Game</button>
       </div>
     </div>
 

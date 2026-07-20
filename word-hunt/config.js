@@ -28,7 +28,8 @@ const CONFIG = {
   // Timer mode: number of seconds on the clock, or null for infinite.
   timerDefault: null,
 
-  // Seconds added to the clock per word found (like chess increment).
+  // Default seconds added to the clock per word found (like chess increment).
+  // Overridden by the in-game increment picker if set.
   timerIncrement: 2,
 
   // App version — bump this to know your latest updates applied.
