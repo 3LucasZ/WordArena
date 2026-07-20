@@ -151,6 +151,7 @@ const S = {
   editMode: false,
   editCell: null,
   muted: localStorage.getItem("wh-muted") === "true",
+  longWordPreview: false,
 };
 
 // ============================================================
@@ -192,6 +193,8 @@ function renderBoard() {
     }
   }
 
+  S.longWordPreview = S.selection.length >= 6 && pathStatus === "valid";
+
   for (let i = 0; i < n * n; i++) {
     const cell = cells[i];
     cell.textContent = S.board[i];
@@ -199,6 +202,9 @@ function renderBoard() {
     const col = i % n;
     const si = S.selection.findIndex((t) => t.r === row && t.c === col);
     cell.className = "cell";
+    cell.style.removeProperty("--bp-r");
+    cell.style.removeProperty("--bp-g");
+    cell.style.removeProperty("--bp-b");
     if (S.editMode) {
       cell.classList.add("edit-mode");
       if (S.editCell && S.editCell.r === row && S.editCell.c === col) {
@@ -209,7 +215,24 @@ function renderBoard() {
       else if (pathStatus === "dup") cell.classList.add("selected-dup");
       else cell.classList.add("selected");
       if (si === 0) cell.classList.add("first");
+      if (S.longWordPreview) cell.classList.add("burst-preview");
     }
+  }
+
+  if (S.longWordPreview) {
+    const palettes = [
+      ["#ff9500","#ffcc00"],
+      ["#af52de","#bf5ee0","#d56fff"],
+      ["#ff3b30","#ff9500","#ffcc00","#34c759","#5ac8fa","#af52de"],
+    ];
+    const colors = palettes[Math.min(S.selection.length - 6, 2)];
+    S.selection.forEach((t, i) => {
+      const el = cells[t.r * n + t.c];
+      const hex = colors[i % colors.length];
+      el.style.setProperty("--bp-r", parseInt(hex.slice(1,3), 16));
+      el.style.setProperty("--bp-g", parseInt(hex.slice(3,5), 16));
+      el.style.setProperty("--bp-b", parseInt(hex.slice(5,7), 16));
+    });
   }
   currentWordEl.className = "";
   const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
@@ -393,6 +416,7 @@ editInput.addEventListener("input", () => {
       S.editCell = { r: Math.floor(next / S.gridSize), c: next % S.gridSize };
     }
     renderBoard();
+    saveBoard();
   }
   editInput.value = "";
 });
@@ -422,6 +446,7 @@ document.addEventListener("keydown", (e) => {
           };
         }
         renderBoard();
+        saveBoard();
       }
     }
     if (key === "Backspace" && S.editCell) {
@@ -436,6 +461,7 @@ document.addEventListener("keydown", (e) => {
         };
       }
       renderBoard();
+      saveBoard();
     }
     if (key === "Enter" || key === "Escape" || key === " ") {
       e.preventDefault();
@@ -480,6 +506,7 @@ document.addEventListener("keydown", (e) => {
 // ============================================================
 function submitWord() {
   const n = S.gridSize;
+  const path = S.selection.slice();
   const word = S.selection.map((t) => S.board[t.r * n + t.c]).join("");
   S.selection = [];
   renderBoard();
@@ -490,6 +517,7 @@ function submitWord() {
     !S.foundWords.has(word)
   ) {
     navigator.vibrate?.(15);
+    if (word.length >= 6) burstTiles(path, word.length);
     S.foundWords.add(word);
     S.foundList.unshift({ word, score: wordScore(word) });
     S.score += wordScore(word);
@@ -498,6 +526,37 @@ function submitWord() {
     playCorrect(word.length);
     flashScore();
   }
+}
+
+function burstTiles(path, len) {
+  const palettes = [
+    ["#ff9500","#ffcc00"],                         // 6 letters
+    ["#af52de","#bf5ee0","#d56fff"],               // 7 letters
+    ["#ff3b30","#ff9500","#ffcc00","#34c759","#5ac8fa","#af52de"], // 8+
+  ];
+  const colors = palettes[Math.min(len - 6, 2)];
+  const step = 40;
+  const cells = boardEl.children;
+  path.forEach((t, i) => {
+    const el = cells[t.r * S.gridSize + t.c];
+    const c = colors[i % colors.length];
+    // Snap to flash color instantly
+    el.style.transition = "none";
+    el.style.background = c;
+    el.style.borderColor = c;
+    el.style.boxShadow = `0 0 20px ${c}`;
+    el.style.transform = "scale(1.08)";
+    // Schedule fade-back after this tile's delay
+    setTimeout(() => {
+      el.style.transition = "background 0.35s, border-color 0.35s, box-shadow 0.35s, transform 0.35s";
+      el.style.background = "";
+      el.style.borderColor = "";
+      el.style.boxShadow = "";
+      el.style.transform = "";
+      // Clean up inline transition after animation completes
+      setTimeout(() => { el.style.transition = ""; }, 380);
+    }, i * step);
+  });
 }
 
 function flashScore() {
@@ -560,10 +619,50 @@ function renderFoundWords() {
 }
 
 // ============================================================
+// RESET (keep board, clear progress)
+// ============================================================
+function resetBoard() {
+  S.selection = [];
+  S.foundWords = new Set();
+  S.foundList = [];
+  S.score = 0;
+  S.showSolutions = false;
+  S.solutionsList = null;
+  document.getElementById("solutions-btn").textContent = "SOLUTIONS";
+  updateScore();
+  renderFoundWords();
+  renderBoard();
+  saveBoard();
+  currentWordEl.textContent = "Drag to play";
+  currentWordEl.className = "hint";
+}
+
+// ============================================================
 // NEW GAME
 // ============================================================
-function newGame() {
-  S.board = generateBoard(S.gridSize);
+function saveBoard() {
+  localStorage.setItem("wh-board", JSON.stringify({
+    size: S.gridSize,
+    letters: S.board,
+  }));
+  console.log("[board] saved to localStorage");
+}
+
+function loadSavedBoard() {
+  try {
+    const raw = localStorage.getItem("wh-board");
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (data.size === S.gridSize && data.letters.length === S.gridSize * S.gridSize) {
+      console.log("[board] loaded from localStorage");
+      return data.letters;
+    }
+  } catch {}
+  return null;
+}
+
+function newGame(board) {
+  S.board = board || generateBoard(S.gridSize);
   S.selection = [];
   S.foundWords = new Set();
   S.foundList = [];
@@ -596,6 +695,7 @@ function newGame() {
   }
 
   renderBoard();
+  saveBoard();
   updateScore();
   renderFoundWords();
   currentWordEl.textContent = "Drag to play";
@@ -641,12 +741,63 @@ function buildThemePicker() {
 // BOARD SIZE
 // ============================================================
 function setBoardSize(size) {
+  const oldN = S.gridSize;
+  const oldBoard = S.board;
   S.gridSize = size;
   localStorage.setItem("wh-size", String(size));
   document.querySelectorAll(".size-btn").forEach((el) => {
     el.classList.toggle("active", Number(el.dataset.size) === size);
   });
-  newGame();
+
+  // Resize board in-place: keep overlap, clear the rest
+  const n = size;
+  const newBoard = [];
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (oldBoard && r < oldN && c < oldN) {
+        newBoard.push(oldBoard[r * oldN + c]);
+      } else {
+        newBoard.push("");
+      }
+    }
+  }
+  S.board = newBoard;
+  S.selection = [];
+  S.foundWords = new Set();
+  S.foundList = [];
+  S.score = 0;
+  S.showSolutions = false;
+  S.solutionsList = null;
+  S.editMode = false;
+  S.editCell = null;
+  document.getElementById("solutions-btn").textContent = "SOLUTIONS";
+  const editBtn = document.getElementById("btn-edit");
+  if (editBtn) editBtn.classList.remove("active");
+  if (editInput) editInput.blur();
+
+  boardEl.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  boardEl.style.gridTemplateRows = `repeat(${n}, 1fr)`;
+  const fs =
+    n <= 4
+      ? "clamp(28px, 7vw, 44px)"
+      : n === 5
+        ? "clamp(24px, 7vw, 38px)"
+        : "clamp(20px, 6vw, 32px)";
+  boardEl.style.setProperty("--cell-fs", fs);
+  boardEl.dataset.size = n;
+
+  boardEl.innerHTML = "";
+  for (let i = 0; i < n * n; i++) {
+    const div = document.createElement("div");
+    div.className = "cell";
+    boardEl.appendChild(div);
+  }
+
+  renderBoard();
+  updateScore();
+  renderFoundWords();
+  currentWordEl.textContent = "Drag to play";
+  currentWordEl.className = "hint";
 }
 
 function buildSizePicker() {
@@ -699,6 +850,9 @@ document.getElementById("btn-new").addEventListener("click", newGame);
 document.getElementById("btn-edit").addEventListener("click", () => {
   if (S.gridSize) toggleEditMode();
 });
+document.getElementById("btn-reset").addEventListener("click", () => {
+  if (S.foundList.length) resetBoard();
+});
 document.getElementById("btn-settings").addEventListener("click", () => {
   document.getElementById("settings-modal").classList.add("open");
   document.getElementById("version-display").textContent = "v" + CONFIG.version;
@@ -716,9 +870,7 @@ document.getElementById("btn-hard-reload").addEventListener("click", () => {
 });
 
 function updateMuteBtn() {
-  const btn = document.getElementById("btn-mute");
-  btn.textContent = S.muted ? "Unmute" : "Mute";
-  btn.classList.toggle("muted", S.muted);
+  document.getElementById("btn-mute").classList.toggle("muted", S.muted);
 }
 document.getElementById("btn-mute").addEventListener("click", () => {
   S.muted = !S.muted;
@@ -752,7 +904,9 @@ async function init() {
       "</div>";
     return;
   }
-  if (ok) newGame();
+  if (ok) {
+    newGame(loadSavedBoard());
+  }
 }
 
 init();

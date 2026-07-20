@@ -277,6 +277,24 @@ header h1 {
   box-shadow: 0 0 18px rgba(52, 199, 89, 0.3);
   transform: scale(0.95);
 }
+@keyframes burst-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.35);
+    border-color: rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.3);
+    background: rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.12);
+    transform: scale(0.95);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.7);
+    border-color: rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.5);
+    background: rgba(var(--bp-r), var(--bp-g), var(--bp-b), 0.22);
+    transform: scale(1.02);
+  }
+}
+.cell.burst-preview {
+  animation: burst-pulse 0.8s ease-in-out infinite;
+  z-index: 3;
+}
 .cell.selected-dup,
 .cell.selected-dup.first {
   background: rgba(255, 149, 0, 0.25);
@@ -471,6 +489,30 @@ header h1 {
 #btn-settings:hover svg path {
   fill: var(--text);
 }
+#btn-reset {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 8px;
+  border: none;
+  border-radius: 10px;
+  background: var(--control-bg);
+  cursor: pointer;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#btn-reset svg {
+  stroke: var(--text-dim);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s;
+  fill: none;
+}
+#btn-reset:hover svg { stroke: var(--text); }
+#btn-reset:active { transform: scale(0.92); }
 #btn-edit:active,
 #btn-settings:active {
   transform: scale(0.92);
@@ -580,24 +622,33 @@ header h1 {
   transform: scale(0.96);
 }
 #btn-mute {
-  padding: 8px 24px;
-  border: 2px solid var(--glass-border);
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  border: none;
   border-radius: 10px;
   background: var(--control-bg);
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
-  transition: border-color 0.2s, background 0.2s;
+  position: relative;
 }
-#btn-mute:active {
-  transform: scale(0.96);
+#btn-mute svg {
+  stroke: var(--text-dim);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: stroke 0.15s;
 }
-#btn-mute.muted {
-  border-color: rgba(255, 69, 58, 0.5);
-  background: rgba(255, 69, 58, 0.1);
-}
+#btn-mute:hover svg { stroke: var(--text); }
+#btn-mute:active { transform: scale(0.92); }
+#btn-mute.muted .icon-on { display: none; }
+#btn-mute .icon-off { display: none; }
+#btn-mute.muted .icon-off { display: block; }
 
 /* ---- HELPER ---- */
 .empty-state {
