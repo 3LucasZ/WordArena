@@ -152,6 +152,10 @@ const S = {
   editCell: null,
   muted: localStorage.getItem("wh-muted") === "true",
   longWordPreview: false,
+  gameOver: false,
+  timerMode: null,    // null = infinite, 60/180/300 = seconds
+  timeRemaining: null, // current countdown seconds, null if infinite
+  timerInterval: null,
 };
 
 // ============================================================
@@ -315,6 +319,7 @@ function warmAudio() {
 }
 
 function onPointerDown(e) {
+  if (S.gameOver) return;
   warmAudio();
   const tile = tileAtPoint(e.clientX, e.clientY);
   if (!tile) return;
@@ -323,6 +328,7 @@ function onPointerDown(e) {
     S.editCell = tile;
     S.selection = [];
     renderBoard();
+    editInput.focus();
     return;
   }
 
@@ -398,10 +404,16 @@ function findPath(board, n, seq) {
   return null;
 }
 
-// Exit edit mode when iOS keyboard is dismissed
-editInput.addEventListener("blur", () => {
-  if (S.editMode) toggleEditMode();
-});
+// Exit edit mode when iOS keyboard is dismissed (viewport gets taller)
+let lastVvHeight = 0;
+if (window.visualViewport) {
+  lastVvHeight = window.visualViewport.height;
+  window.visualViewport.addEventListener("resize", () => {
+    const h = window.visualViewport.height;
+    if (S.editMode && h > lastVvHeight + 80) toggleEditMode();
+    lastVvHeight = h;
+  });
+}
 
 editInput.addEventListener("input", () => {
   if (!S.editMode || !S.editCell) return;
@@ -423,6 +435,7 @@ editInput.addEventListener("input", () => {
 
 
 document.addEventListener("keydown", (e) => {
+  if (S.gameOver) return;
   warmAudio();
   const key = e.key;
   if ((e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") && e.target !== editInput) return;
@@ -518,13 +531,18 @@ function submitWord() {
   ) {
     navigator.vibrate?.(15);
     if (word.length >= 6) burstTiles(path, word.length);
+    if (word.length >= 6 && CONFIG.confettiEnabled !== false) confettiBurst(path[path.length - 1], word.length);
     S.foundWords.add(word);
     S.foundList.unshift({ word, score: wordScore(word) });
     S.score += wordScore(word);
     updateScore();
     renderFoundWords();
     playCorrect(word.length);
-    flashScore();
+    flashScore(word.length);
+    if (S.timerMode != null) {
+      S.timeRemaining = Math.min(S.timeRemaining + CONFIG.timerIncrement, 99 * 60);
+      updateTimerDisplay();
+    }
   }
 }
 
@@ -559,15 +577,49 @@ function burstTiles(path, len) {
   });
 }
 
-function flashScore() {
+function flashScore(len) {
+  const flashColor = len >= 8 ? "#af52de" : len >= 6 ? "#ff9500" : "#34c759";
+  const scale = Math.min(1.3 + (len - 3) * 0.05, 1.8);
   scoreEl.style.transition = "none";
-  scoreEl.style.color = "#34c759";
-  scoreEl.style.transform = "scale(1.3)";
+  scoreEl.style.color = flashColor;
+  scoreEl.style.transform = `scale(${scale})`;
   requestAnimationFrame(() => {
-    scoreEl.style.transition = "color 0.4s, transform 0.4s";
+    scoreEl.style.transition = "color 0.5s, transform 0.5s";
     scoreEl.style.color = "";
     scoreEl.style.transform = "";
   });
+}
+
+function confettiBurst(lastTile, len) {
+  const palettes = [
+    ["#ff9500","#ffcc00"],
+    ["#af52de","#bf5ee0","#d56fff"],
+    ["#ff3b30","#ff9500","#ffcc00","#34c759","#5ac8fa","#af52de"],
+  ];
+  const colors = palettes[Math.min(len - 6, 2)];
+  const cells = boardEl.children;
+  const el = cells[lastTile.r * S.gridSize + lastTile.c];
+  const rect = el.getBoundingClientRect();
+  const wrapperRect = boardWrapper.getBoundingClientRect();
+  const cx = rect.left - wrapperRect.left + rect.width / 2;
+  const cy = rect.top - wrapperRect.top + rect.height / 2;
+
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti";
+    const color = colors[i % colors.length];
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 90;
+    p.style.setProperty("--x", Math.cos(angle) * dist + "px");
+    p.style.setProperty("--y", Math.sin(angle) * dist - 30 + "px");
+    p.style.setProperty("--c", color);
+    p.style.left = cx + "px";
+    p.style.top = cy + "px";
+    p.style.animationDuration = (0.4 + Math.random() * 0.5) + "s";
+    p.style.animationDelay = (Math.random() * 0.15) + "s";
+    boardWrapper.appendChild(p);
+    p.addEventListener("animationend", () => p.remove());
+  }
 }
 
 function updateScore() {
@@ -610,9 +662,9 @@ function renderFoundWords() {
     return;
   }
   wordsCountEl.textContent = S.foundList.length;
-  for (const entry of S.foundList) {
+  for (const [ei, entry] of S.foundList.entries()) {
     const div = document.createElement("div");
-    div.className = "word-entry";
+    div.className = "word-entry" + (ei === 0 ? " new-entry" : "");
     div.innerHTML = `<span class="word-text">${entry.word}</span><span class="word-score">${entry.score}</span>`;
     wordsContainer.appendChild(div);
   }
@@ -623,6 +675,7 @@ function renderFoundWords() {
 // ============================================================
 function resetBoard() {
   S.selection = [];
+  S.gameOver = false;
   S.foundWords = new Set();
   S.foundList = [];
   S.score = 0;
@@ -662,7 +715,7 @@ function loadSavedBoard() {
 }
 
 function newGame(board) {
-  S.board = board || generateBoard(S.gridSize);
+  S.board = Array.isArray(board) ? board : generateBoard(S.gridSize);
   S.selection = [];
   S.foundWords = new Set();
   S.foundList = [];
@@ -671,6 +724,7 @@ function newGame(board) {
   S.solutionsList = null;
   S.editMode = false;
   S.editCell = null;
+  S.gameOver = false;
   document.getElementById("solutions-btn").textContent = "SOLUTIONS";
   const editBtn = document.getElementById("btn-edit");
   if (editBtn) editBtn.classList.remove("active");
@@ -700,6 +754,7 @@ function newGame(board) {
   renderFoundWords();
   currentWordEl.textContent = "Drag to play";
   currentWordEl.className = "hint";
+  startTimer();
 }
 
 // ============================================================
@@ -770,6 +825,7 @@ function setBoardSize(size) {
   S.solutionsList = null;
   S.editMode = false;
   S.editCell = null;
+  S.gameOver = false;
   document.getElementById("solutions-btn").textContent = "SOLUTIONS";
   const editBtn = document.getElementById("btn-edit");
   if (editBtn) editBtn.classList.remove("active");
@@ -833,6 +889,112 @@ function toggleEditMode() {
 }
 
 // ============================================================
+// TIMER
+// ============================================================
+function formatTime(secs) {
+  if (secs == null) return "∞";
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById("timer-display");
+  if (S.timerMode == null) {
+    el.textContent = "∞";
+    document.getElementById("timer-stat").classList.remove("low");
+    return;
+  }
+  el.textContent = formatTime(S.timeRemaining);
+  document.getElementById("timer-stat").classList.toggle("low", S.timeRemaining <= 10);
+}
+
+function startTimer() {
+  stopTimer();
+  if (S.timerMode == null) {
+    updateTimerDisplay();
+    return;
+  }
+  S.timeRemaining = S.timerMode;
+  updateTimerDisplay();
+  S.timerInterval = setInterval(() => {
+    S.timeRemaining--;
+    updateTimerDisplay();
+    if (S.timeRemaining <= 0) {
+      S.timeRemaining = 0;
+      updateTimerDisplay();
+      gameOver();
+    }
+  }, 1000);
+}
+
+function stopTimer() {
+  if (S.timerInterval) {
+    clearInterval(S.timerInterval);
+    S.timerInterval = null;
+  }
+}
+
+function gameOver() {
+  stopTimer();
+  S.gameOver = true;
+  S.selection = [];
+  renderBoard();
+  document.getElementById("final-score").textContent = S.score;
+  document.getElementById("final-words").textContent = S.foundList.length;
+  document.getElementById("game-over-overlay").classList.add("open");
+}
+
+function gameOverNewGame() {
+  document.getElementById("game-over-overlay").classList.remove("open");
+  newGame();
+}
+
+// ============================================================
+// TIMER PICKER
+// ============================================================
+const TIMER_MODES = [
+  { label: "1:00", seconds: 60 },
+  { label: "3:00", seconds: 180 },
+  { label: "5:00", seconds: 300 },
+  { label: "∞", seconds: null },
+];
+
+function buildTimerPicker() {
+  const container = document.getElementById("timer-picker");
+  const saved = (() => {
+    const v = localStorage.getItem("wh-timer");
+    if (v === "0" || v == null) return null;
+    return Number(v);
+  })();
+  S.timerMode = saved;
+
+  for (const mode of TIMER_MODES) {
+    const btn = document.createElement("button");
+    const isActive =
+      saved === mode.seconds || (saved == null && mode.seconds == null);
+    btn.className = "timer-btn" + (isActive ? " active" : "");
+    btn.dataset.timer = mode.seconds;
+    btn.textContent = mode.label;
+    btn.addEventListener("click", () => setTimerMode(mode.seconds));
+    container.appendChild(btn);
+  }
+}
+
+function setTimerMode(seconds) {
+  S.timerMode = seconds;
+  if (seconds == null) {
+    localStorage.removeItem("wh-timer");
+  } else {
+    localStorage.setItem("wh-timer", String(seconds));
+  }
+  document.querySelectorAll(".timer-btn").forEach((el) => {
+    el.classList.toggle("active", Number(el.dataset.timer) === seconds);
+  });
+  // If game hasn't started yet, the timer picks up on next newGame
+}
+
+// ============================================================
 // SOLUTIONS TOGGLE
 // ============================================================
 document.getElementById("solutions-btn").addEventListener("click", () => {
@@ -868,6 +1030,10 @@ document.getElementById("settings-modal").addEventListener("click", (e) => {
 document.getElementById("btn-hard-reload").addEventListener("click", () => {
   location.reload(true);
 });
+document.getElementById("btn-new-after-gameover").addEventListener("click", gameOverNewGame);
+document.getElementById("game-over-overlay").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove("open");
+});
 
 function updateMuteBtn() {
   document.getElementById("btn-mute").classList.toggle("muted", S.muted);
@@ -886,6 +1052,8 @@ document.getElementById("btn-mute").addEventListener("click", () => {
 
 buildSizePicker();
 buildThemePicker();
+buildTimerPicker();
+updateTimerDisplay();
 
 async function init() {
   // Kick off all fetches in parallel

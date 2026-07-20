@@ -15,11 +15,13 @@
   <body>
     <div id="game">
       <header>
-        <!-- <h1>WORD ARENA</h1> -->
         <div class="stats">
           <div class="stat">
             <span>SCORE</span>
             <span class="stat-value" id="score">0</span>
+          </div>
+          <div class="stat timer-stat" id="timer-stat">
+            <span id="timer-display">--:--</span>
           </div>
         </div>
       </header>
@@ -77,6 +79,8 @@
           <div id="size-picker"></div>
           <h2 style="margin-top: 20px">Theme</h2>
           <div id="theme-picker"></div>
+          <h2 style="margin-top: 20px">Timer</h2>
+          <div id="timer-picker"></div>
           <div style="margin-top: 16px;">
             <button id="btn-mute">
               <svg width="20" height="20" viewBox="0 0 24 24" class="icon-on" fill="none">
@@ -96,6 +100,15 @@
             <div id="version-display" style="font-size: 11px; color: var(--text-faint);"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div id="game-over-overlay">
+      <div id="game-over-panel">
+        <h2>Time's Up!</h2>
+        <p class="game-over-score">Score: <span id="final-score">0</span></p>
+        <p class="game-over-words">Words: <span id="final-words">0</span></p>
+        <button id="btn-new-after-gameover">New Game</button>
       </div>
     </div>
 

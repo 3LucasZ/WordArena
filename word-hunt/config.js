@@ -22,6 +22,15 @@ const CONFIG = {
   // Volume for the letter-select sound (0 to 1).
   selectSoundVolume: 0.3,
 
+  // Play confetti burst on long words (6+ letters).
+  confettiEnabled: false,
+
+  // Timer mode: number of seconds on the clock, or null for infinite.
+  timerDefault: null,
+
+  // Seconds added to the clock per word found (like chess increment).
+  timerIncrement: 2,
+
   // App version — bump this to know your latest updates applied.
   version: "1.0.2",
 };
